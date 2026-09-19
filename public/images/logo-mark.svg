@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-labelledby="harme-mark-title">
+  <title id="harme-mark-title">Harme Medical Center</title>
+
+  <!--
+    Compact mark for small renditions (report letterhead, footer, favicons).
+
+    Differs from the full logo in two deliberate ways:
+      * the HARME wordmark is dropped — at letterhead size it renders around
+        5px tall and turns to mud, and the organisation name is already set in
+        type beside it;
+      * no SVG <text> at all, so there is no font to substitute when the
+        report is printed or distilled to PDF on a machine without Arial.
+    The ECG trace is recentred on the circle and thickened so it survives at
+    small sizes and on paper.
+  -->
+
+  <!-- Background disc: keeps the mark legible on dark surfaces too -->
+  <circle cx="250" cy="250" r="242" fill="#FFFFFF"/>
+
+  <!-- Left green frame -->
+  <path d="M 247,72 L 72,250 L 247,428"
+        fill="none"
+        stroke="#009E2B"
+        stroke-width="38"
+        stroke-linecap="butt"
+        stroke-linejoin="round"/>
+
+  <!-- Right blue frame -->
+  <path d="M 253,72 L 428,250 L 253,428"
+        fill="none"
+        stroke="#0052CC"
+        stroke-width="38"
+        stroke-linecap="butt"
+        stroke-linejoin="round"/>
+
+  <!-- ECG / heartbeat pulse, centred on the disc -->
+  <path d="M 150,250
+           L 205,250
+           L 214,266
+           L 223,231
+           L 232,276
+           L 248,170
+           L 262,320
+           L 276,226
+           L 286,250
+           L 350,250"
+        fill="none"
+        stroke="#009E2B"
+        stroke-width="16"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>

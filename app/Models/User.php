@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Exceptions\WorkflowViolationException;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +15,7 @@ use Illuminate\Notifications\Notifiable;
 
 /**
  * @property int $id
+ * @property int $staff_id
  * @property string $name
  * @property string $email
  * @property int|null $role_id
@@ -60,10 +62,56 @@ class User extends Authenticatable
         ];
     }
 
+    protected static function booted(): void
+    {
+        /*
+         * Which person an account belongs to is settled when it is created.
+         * Repointing it afterwards would silently reattribute every historical
+         * record that resolves identity through this account, so it is refused
+         * here rather than left to callers to remember.
+         */
+        static::updating(function (self $user): void {
+            if ($user->isDirty('staff_id') && $user->getOriginal('staff_id') !== null) {
+                throw WorkflowViolationException::because(
+                    'An account cannot be moved to a different staff record. '
+                    .'Disable this account and create one against the other staff profile instead.'
+                );
+            }
+        });
+    }
+
     /** @return BelongsTo<Role, $this> */
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * The professional identity behind this account.
+     *
+     * Every account has one. `staff_id` is absent from $fillable on purpose:
+     * it is set from trusted route context when an account is created against
+     * a staff profile, never from a request body, and it is refused on update
+     * by the booted() hook below.
+     *
+     * @return BelongsTo<Staff, $this>
+     */
+    public function staff(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'staff_id');
+    }
+
+    /**
+     * The actor identity for this account.
+     *
+     * A convenience over the resolver for display; it does NOT replace it.
+     * Anything recording who performed an action must go through
+     * {@see \App\Services\AuthenticatedStaffResolver} so the status rules are
+     * applied in one place.
+     */
+    public function staffDisplayName(): string
+    {
+        return $this->staff?->displayName() ?? $this->name;
     }
 
     /** @param Builder<$this> $query */

@@ -113,7 +113,7 @@
                 <div>
                     <p class="font-semibold">
                         Cancelled on {{ $requisition->cancelled_at?->format('d M Y H:i') }}
-                        by {{ $requisition->cancelledBy?->name ?? 'a former user' }}
+                        by {{ $requisition->actorDisplayName('cancelled_by') ?? 'a former user' }}
                     </p>
                     @if ($requisition->cancellation_reason)
                         <p class="mt-0.5">{{ $requisition->cancellation_reason }}</p>
@@ -152,7 +152,7 @@
                     <x-detail label="Priority" :value="$requisition->priority->label()" />
                     <x-detail label="Requesting clinician" :value="$requisition->requesting_clinician" />
                     <x-detail label="Department" :value="$requisition->requesting_department" />
-                    <x-detail label="Created by" :value="$requisition->createdBy?->name" />
+                    <x-detail label="Requested by" :value="$requisition->actorDisplayName('requested_by') ?? $requisition->createdBy?->name" />
                 </x-detail-list>
             </x-card>
 

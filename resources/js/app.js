@@ -209,6 +209,178 @@ Alpine.data('confirmDialog', () => ({
 }));
 
 /**
+ * Shared controlled-vocabulary selector.
+ *
+ * Backs <x-form.shared-enum-select>. Options are fetched from the enum
+ * catalogue endpoint rather than rendered into the page, so a vocabulary has
+ * one definition and no view can drift from it.
+ *
+ * Searching matches the display text and the vocabulary's own synonyms, so
+ * "card" finds Cardiology and Cardiothoracic Surgery, and "heart" finds
+ * Cardiology even though the word does not appear in its label.
+ *
+ * A dependent selector follows another field: when the parent changes, the list
+ * reloads and a selection that no longer belongs to the new parent is cleared,
+ * so an invalid pairing cannot survive in the form. The server enforces the
+ * same rule independently — see App\Rules\ValidSubSpeciality.
+ */
+Alpine.data('sharedEnumSelect', (config = {}) => ({
+    enumName: config.enumName,
+    endpoint: config.endpoint,
+    parent: config.parent ?? null,
+    parentField: config.parentField ?? null,
+    nullable: config.nullable !== false,
+
+    open: false,
+    loading: false,
+    failed: false,
+    loaded: false,
+    query: '',
+    highlighted: 0,
+    options: [],
+    selected: config.initial ?? '',
+    selectedLabel: '',
+
+    init() {
+        // A dependent selector with no parent yet has nothing to offer, so it
+        // stays disabled rather than presenting an empty list.
+        if (this.selected) {
+            this.load();
+        }
+    },
+
+    get waitingForParent() {
+        return this.parentField !== null && !this.parent;
+    },
+
+    get isDisabled() {
+        return this.$el.querySelector('button[disabled]') !== null || this.waitingForParent;
+    },
+
+    get results() {
+        const query = this.query.trim().toLowerCase();
+
+        if (!query) {
+            return this.options;
+        }
+
+        return this.options.filter((option) => {
+            if (option.text.toLowerCase().includes(query)) {
+                return true;
+            }
+
+            return (option.searchKeywords ?? []).some((keyword) => keyword.toLowerCase().includes(query));
+        });
+    },
+
+    async load() {
+        if (this.waitingForParent) {
+            this.options = [];
+            return;
+        }
+
+        this.loading = true;
+        this.failed = false;
+
+        const url = new URL(`${this.endpoint}/${this.enumName}`, window.location.origin);
+        if (this.parent) {
+            url.searchParams.set('parent', this.parent);
+        }
+
+        try {
+            const response = await fetch(url, { headers: { Accept: 'application/json' } });
+            if (!response.ok) throw new Error(String(response.status));
+
+            const payload = await response.json();
+            this.options = payload.values ?? [];
+            this.loaded = true;
+            this.syncSelectedLabel();
+        } catch {
+            this.failed = true;
+            this.options = [];
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    syncSelectedLabel() {
+        const match = this.options.find((option) => option.value === this.selected);
+
+        if (match) {
+            this.selectedLabel = match.text;
+            return;
+        }
+
+        // The stored value is not in the current list — either it is retired, or
+        // the parent changed underneath it. Clearing is the safe reading: a
+        // value that is not offered must not be silently resubmitted.
+        if (this.loaded && this.selected) {
+            this.clear();
+        }
+    },
+
+    async toggle() {
+        if (this.isDisabled) return;
+
+        this.open = !this.open;
+
+        if (this.open) {
+            if (!this.loaded) await this.load();
+            this.highlighted = Math.max(0, this.results.findIndex((o) => o.value === this.selected));
+            this.$nextTick(() => this.$refs.search?.focus());
+        }
+    },
+
+    close() {
+        this.open = false;
+        this.query = '';
+        this.$refs.trigger?.focus();
+    },
+
+    move(offset) {
+        const count = this.results.length;
+        if (count === 0) return;
+
+        this.highlighted = (this.highlighted + offset + count) % count;
+    },
+
+    choose(option) {
+        if (!option) return;
+
+        this.selected = option.value;
+        this.selectedLabel = option.text;
+        this.announce();
+        this.close();
+    },
+
+    clear() {
+        this.selected = '';
+        this.selectedLabel = '';
+        this.announce();
+    },
+
+    /** Lets a dependent selector downstream of this one react. */
+    announce() {
+        window.dispatchEvent(
+            new CustomEvent('shared-enum-changed', {
+                detail: { enumName: this.enumName, value: this.selected },
+            }),
+        );
+    },
+
+    onSiblingChanged(event) {
+        if (this.parentField === null || event.detail.enumName !== this.parentField) {
+            return;
+        }
+
+        this.parent = event.detail.value || null;
+        this.loaded = false;
+        this.options = [];
+        this.load();
+    },
+}));
+
+/**
  * Labels data-table cells for the stacked, small-screen presentation.
  *
  * Below the sm breakpoint app.css turns each table row into a card and prints

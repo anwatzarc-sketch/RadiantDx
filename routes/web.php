@@ -3,9 +3,16 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Administration\RoleController;
+use App\Http\Controllers\Administration\PhysicianController;
+use App\Http\Controllers\Administration\StaffAccountController;
+use App\Http\Controllers\Administration\StaffController;
+use App\Http\Controllers\Administration\StaffExportController;
+use App\Http\Controllers\Administration\StaffImportController;
+use App\Http\Controllers\Administration\StaffPhotoController;
 use App\Http\Controllers\Administration\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EnumController;
 use App\Http\Controllers\Laboratory\LaboratoryPanelController;
 use App\Http\Controllers\Laboratory\LaboratoryTestController;
 use App\Http\Controllers\Laboratory\ReportController;
@@ -49,11 +56,28 @@ Route::post('logout', [LoginController::class, 'destroy'])
 
 Route::middleware(['auth', 'active'])->group(function (): void {
 
+    /*
+     * Shared controlled vocabularies, read-only.
+     *
+     * Deliberately outside the `password.changed` group: the vocabularies feed
+     * the forms on the profile and password screens, which stay reachable while
+     * a temporary password is outstanding.
+     *
+     * No permission gate. These are the application's own option lists, not
+     * records — nothing here is patient identifying or facility specific, and a
+     * signed-in user who can open a form can already see the options in it.
+     */
+    Route::prefix('enums')->name('enums.')->group(function (): void {
+        Route::get('/', [EnumController::class, 'index'])->name('index');
+        Route::get('{enumName}', [EnumController::class, 'show'])->name('show');
+    });
+
     // The profile stays reachable while a temporary password is outstanding.
     Route::prefix('profile')->name('profile.')->group(function (): void {
         Route::get('/', [ProfileController::class, 'edit'])->name('edit');
         Route::put('/', [ProfileController::class, 'update'])->name('update');
         Route::put('password', [ProfileController::class, 'updatePassword'])->name('password.update');
+        Route::put('details', [ProfileController::class, 'updateStaffProfile'])->name('staff.update');
     });
 
     Route::prefix('admin')->middleware('password.changed')->group(function (): void {
@@ -79,6 +103,48 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::patch('{user}/activate', [UserController::class, 'activate'])->middleware('permission:users.activate')->name('activate');
             Route::patch('{user}/deactivate', [UserController::class, 'deactivate'])->middleware('permission:users.deactivate')->name('deactivate');
             Route::delete('{user}', [UserController::class, 'destroy'])->middleware('permission:users.delete')->name('destroy');
+        });
+
+        /*
+         * Staff records.
+         *
+         * Note the account route: it is nested under a staff record, so which
+         * person an account belongs to comes from the URL rather than from a
+         * field anyone can edit.
+         */
+        // Physicians are staff, so the directory reads staff records and the
+        // profile editor writes them. There is no separate physician entity.
+        Route::prefix('physicians')->name('administration.physicians.')->group(function (): void {
+            Route::get('/', [PhysicianController::class, 'index'])->middleware('permission:staff.view')->name('index');
+            Route::get('{staff}/edit', [PhysicianController::class, 'edit'])->middleware('permission:staff.physician.manage')->name('edit');
+            Route::put('{staff}', [PhysicianController::class, 'update'])->middleware('permission:staff.physician.manage')->name('update');
+            Route::post('{staff}/qualifications', [PhysicianController::class, 'storeQualification'])->middleware('permission:staff.qualification.manage')->name('qualifications.store');
+            Route::delete('{staff}/qualifications/{qualification}', [PhysicianController::class, 'destroyQualification'])->middleware('permission:staff.qualification.manage')->name('qualifications.destroy');
+        });
+
+        Route::prefix('staff')->name('administration.staff.')->group(function (): void {
+            Route::get('/', [StaffController::class, 'index'])->middleware('permission:staff.view')->name('index');
+            Route::get('create', [StaffController::class, 'create'])->middleware('permission:staff.create')->name('create');
+            Route::post('/', [StaffController::class, 'store'])->middleware('permission:staff.create')->name('store');
+
+            Route::get('import', [StaffImportController::class, 'create'])->middleware('permission:staff.import')->name('import.create');
+            Route::post('import/preview', [StaffImportController::class, 'preview'])->middleware('permission:staff.import')->name('import.preview');
+            Route::post('import', [StaffImportController::class, 'store'])->middleware('permission:staff.import')->name('import.store');
+            Route::get('export', StaffExportController::class)->middleware('permission:staff.export')->name('export');
+
+            Route::get('{staff}', [StaffController::class, 'show'])->middleware('permission:staff.view')->name('show');
+            Route::get('{staff}/edit', [StaffController::class, 'edit'])->middleware('permission:staff.update')->name('edit');
+            Route::put('{staff}', [StaffController::class, 'update'])->middleware('permission:staff.update')->name('update');
+            Route::patch('{staff}/status', [StaffController::class, 'changeStatus'])->middleware('permission:staff.status.manage')->name('status');
+            Route::post('{staff}/account', [StaffAccountController::class, 'store'])->middleware('permission:staff.account.manage')->name('account.store');
+
+            // The photo routes carry no permission middleware: the policy
+            // decides, because changing your own picture and changing someone
+            // else's are different permissions against the same route.
+            Route::get('{staff}/photo', [StaffPhotoController::class, 'show'])->name('photo.show');
+            Route::post('{staff}/photo', [StaffPhotoController::class, 'store'])->name('photo.store');
+            Route::delete('{staff}/photo', [StaffPhotoController::class, 'destroy'])->name('photo.destroy');
+            Route::delete('{staff}', [StaffController::class, 'destroy'])->middleware('permission:staff.delete')->name('destroy');
         });
 
         Route::prefix('roles')->name('administration.roles.')->group(function (): void {

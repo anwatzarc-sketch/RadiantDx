@@ -205,15 +205,21 @@
 
             <p class="mt-2 text-xs text-slate-600">
                 @if ($result->isValidated())
-                    Validated by {{ $result->validatedBy?->name ?? 'the laboratory' }}
+                    {{-- From the frozen snapshot, never a live join: a report
+                         reprinted years from now must name whoever validated it
+                         then, with the speciality they held at the time. --}}
+                    Validated by {{ $result->actorDisplayName('validated_by') ?? 'the laboratory' }}
+                    @if ($result->actorSpecialityLabel('validated_by'))
+                        ({{ $result->actorSpecialityLabel('validated_by') }})
+                    @endif
                     on {{ $result->validated_at?->format('d M Y H:i') }}.
                 @else
                     <span class="font-semibold text-amber-800">
                         Not validated. This investigation is provisional and must not be used for clinical decisions.
                     </span>
                 @endif
-                @if ($result->performedBy)
-                    Performed by {{ $result->performedBy->name }}.
+                @if ($result->actorDisplayName('performed_by'))
+                    Performed by {{ $result->actorDisplayName('performed_by') }}.
                 @endif
             </p>
         </section>
@@ -248,7 +254,12 @@
             <div class="w-52 shrink-0 text-center">
                 <div class="h-10 border-b border-slate-500"></div>
                 <p class="mt-1 font-semibold text-slate-900">Authorised signatory</p>
-                <p>{{ $results->first()?->validatedBy?->name ?? '' }}</p>
+                <p>{{ $results->first()?->actorDisplayName('validated_by') ?? '' }}</p>
+                @if ($results->first()?->actorSpecialityLabel('validated_by'))
+                    <p class="text-[0.7rem] text-slate-600">
+                        {{ $results->first()->actorSpecialityLabel('validated_by') }}
+                    </p>
+                @endif
             </div>
         </div>
         <p class="mt-3 text-center text-[0.65rem] text-slate-500">

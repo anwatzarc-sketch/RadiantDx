@@ -14,6 +14,7 @@ use App\Models\LaboratoryRequisitionItem;
 use App\Models\LaboratoryTest;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\AuthenticatedStaffResolver;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -31,6 +32,7 @@ class RequisitionService
         private readonly ReferenceNumberGenerator $numbers,
         private readonly AuditLogger $audit,
         private readonly ResultService $results,
+        private readonly AuthenticatedStaffResolver $identity,
     ) {}
 
     /**
@@ -45,6 +47,17 @@ class RequisitionService
             $requisition->status = RequisitionStatus::Draft;
             $requisition->created_by = $actor->getKey();
             $requisition->updated_by = $actor->getKey();
+
+            /*
+             * The requesting clinician is resolved from the session, never
+             * accepted from the request. It is frozen here as well, so the
+             * report keeps naming whoever actually raised the requisition even
+             * after they change speciality or leave.
+             */
+            $requestor = $this->identity->resolve($actor);
+            $requisition->recordActor('requested_by', $requestor);
+            $requisition->requesting_clinician = $requestor->displayName();
+
             $requisition->save();
 
             $this->syncItems($requisition, $selections);
@@ -213,6 +226,7 @@ class RequisitionService
             $requisition->status = RequisitionStatus::Cancelled;
             $requisition->cancelled_at = now();
             $requisition->cancelled_by = $actor->getKey();
+            $requisition->recordActor('cancelled_by', $this->identity->resolve($actor));
             $requisition->cancellation_reason = $reason;
             $requisition->updated_by = $actor->getKey();
             $requisition->save();

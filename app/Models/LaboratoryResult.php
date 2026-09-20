@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActorSnapshots;
+
 use App\Enums\ResultStatus;
 use App\Enums\ValidationStatus;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,7 +28,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class LaboratoryResult extends Model
 {
-    use SoftDeletes;
+    use RecordsActorSnapshots, SoftDeletes;
+
+    /**
+     * Roles this record freezes an actor for. Each appears on a printed report
+     * or a historical screen, so each must survive a later name change.
+     *
+     * @var list<string>
+     */
+    protected array $actorSnapshotRoles = ['performed_by', 'validated_by', 'printed_by'];
 
     protected $fillable = [
         'result_number',

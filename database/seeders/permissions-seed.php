@@ -114,4 +114,24 @@ return [
         ],
     ],
 
+    [
+        'module' => 'Staff Management',
+        'permissions' => [
+            'staff.view' => 'View staff records',
+            'staff.create' => 'Create staff records',
+            'staff.update' => 'Update staff records',
+            'staff.delete' => 'Delete staff records',
+            'staff.status.manage' => 'Change staff status',
+            'staff.account.manage' => 'Manage staff system accounts',
+            'staff.photo.manage' => 'Manage staff profile photos',
+            'staff.photo.manage.self' => 'Change own profile photo',
+            'staff.import' => 'Import staff records',
+            'staff.export' => 'Export staff records',
+            'staff.activity.view' => 'View staff activity history',
+            'staff.physician.manage' => 'Manage physician licensing and practice',
+            'staff.qualification.manage' => 'Manage staff qualifications',
+            'profile.self.update' => 'Update own contact details',
+        ],
+    ],
+
 ];

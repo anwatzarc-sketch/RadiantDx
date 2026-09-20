@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActorSnapshots;
+
 use App\Enums\Gender;
 use App\Enums\RequisitionPriority;
 use App\Enums\RequisitionStatus;
@@ -34,7 +36,15 @@ use Illuminate\Support\Carbon;
  */
 class LaboratoryRequisition extends Model
 {
-    use SoftDeletes;
+    use RecordsActorSnapshots, SoftDeletes;
+
+    /**
+     * Roles this record freezes an actor for. Each appears on a printed report
+     * or a historical screen, so each must survive a later name change.
+     *
+     * @var list<string>
+     */
+    protected array $actorSnapshotRoles = ['requested_by', 'cancelled_by'];
 
     protected $fillable = [
         'requisition_number',

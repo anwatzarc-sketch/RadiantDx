@@ -6,12 +6,15 @@ namespace App\Http\Requests\Laboratory;
 
 use App\Enums\Gender;
 use App\Enums\RequisitionPriority;
+use App\Http\Requests\Concerns\IgnoresClientActorFields;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class RequisitionRequest extends FormRequest
 {
+    use IgnoresClientActorFields;
+
     public function authorize(): bool
     {
         return true;
@@ -28,7 +31,6 @@ class RequisitionRequest extends FormRequest
             'patient_age_years' => ['nullable', 'integer', 'min:0', 'max:130'],
 
             'requested_date' => ['required', 'date', 'before_or_equal:today'],
-            'requesting_clinician' => ['nullable', 'string', 'max:255'],
             'requesting_department' => ['nullable', 'string', 'max:255'],
             'priority' => ['required', Rule::enum(RequisitionPriority::class)],
 
@@ -53,6 +55,10 @@ class RequisitionRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        // The requesting clinician is the signed-in user, resolved by
+        // RequisitionService. A value sent for it is discarded here.
+        $this->ignoreClientActorFields();
+
         $this->merge([
             'action' => $this->input('action', 'draft'),
             'priority' => $this->input('priority', RequisitionPriority::Routine->value),
@@ -90,7 +96,6 @@ class RequisitionRequest extends FormRequest
             'patient_date_of_birth',
             'patient_age_years',
             'requested_date',
-            'requesting_clinician',
             'requesting_department',
             'priority',
             'clinical_indication',

@@ -9,6 +9,7 @@ use App\Enums\ParameterDataType;
 use App\Models\LaboratoryResult;
 use App\Models\LaboratoryResultParameter;
 use App\Services\Laboratory\InterpretationEvaluator;
+use App\Http\Requests\Concerns\IgnoresClientActorFields;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -20,6 +21,8 @@ use Illuminate\Validation\Validator;
  */
 class ResultEntryRequest extends FormRequest
 {
+    use IgnoresClientActorFields;
+
     public function authorize(): bool
     {
         return true;
@@ -128,5 +131,11 @@ class ResultEntryRequest extends FormRequest
             'interpretation' => $this->validated('interpretation'),
             'comments' => $this->validated('comments'),
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        // Who entered a result is the signed-in user, never the payload.
+        $this->ignoreClientActorFields();
     }
 }

@@ -72,6 +72,20 @@
             'label' => 'Administration',
             'items' => [
                 [
+                    'label' => 'Staff',
+                    'icon' => 'users',
+                    'route' => 'administration.staff.*',
+                    'href' => route('administration.staff.index'),
+                    'permission' => 'staff.view',
+                ],
+                [
+                    'label' => 'Physicians',
+                    'icon' => 'shield-check',
+                    'route' => 'administration.physicians.*',
+                    'href' => route('administration.physicians.index'),
+                    'permission' => 'staff.view',
+                ],
+                [
                     'label' => 'Users',
                     'icon' => 'users',
                     'route' => 'administration.users.*',

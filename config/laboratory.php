@@ -42,6 +42,17 @@ return [
     ],
 
     /*
+     * Licensing policy.
+     *
+     * How much notice the laboratory wants before a practising licence lapses
+     * is a local decision, so the "expiring soon" window is configuration
+     * rather than a number written into LicenseStatusDeriver.
+     */
+    'licensing' => [
+        'expiring_soon_days' => (int) env('LAB_LICENCE_WARNING_DAYS', 60),
+    ],
+
+    /*
      * Installable-app metadata. Driven from here for the same reason as the
      * rest of this file: another site should be able to deploy and install the
      * application under its own name and colours without touching code.

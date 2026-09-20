@@ -15,6 +15,91 @@
         </div>
     @endif
 
+    @if ($user->staff)
+        {{--
+            Your professional identity, shown as the laboratory sees it. This is
+            what appears on a report when you validate a result, so it is worth
+            being able to check it without an administrator.
+
+            Everything here is read-only: speciality, profession, department and
+            status are administrative, and the form below carries only the
+            fields you are the authority on about yourself.
+        --}}
+        <x-card title="Professional identity" subtitle="How you are identified on laboratory reports.">
+            <div class="flex flex-col gap-6 sm:flex-row sm:items-start">
+                <div class="flex flex-col items-center gap-3">
+                    <x-staff-avatar :staff="$user->staff" size="lg" />
+
+                    @can('managePhoto', $user->staff)
+                        <form method="POST" action="{{ route('administration.staff.photo.store', $user->staff) }}"
+                              enctype="multipart/form-data" class="w-full space-y-2">
+                            @csrf
+                            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                                   required class="field-control text-xs" />
+                            <x-button type="submit" size="sm" variant="secondary" class="w-full">
+                                Update photo
+                            </x-button>
+                        </form>
+                    @endcan
+                </div>
+
+                <div class="min-w-0 flex-1">
+                    <x-detail-list :columns="2">
+                        <x-detail label="Staff ID" :value="$user->staff->staff_id" />
+                        <x-detail label="Name" :value="$user->staff->displayName()" />
+                        <x-detail label="Profession" :value="$user->staff->profession?->label()" />
+                        <x-detail label="Speciality" :value="$user->staff->speciality?->label()" />
+                        <x-detail label="Sub-speciality" :value="$user->staff->sub_speciality?->label()" />
+                        <x-detail label="Department" :value="$user->staff->department?->name" />
+                        <x-detail label="Position" :value="$user->staff->position?->label()" />
+                        <x-detail label="Role" :value="$user->roleName()" />
+                    </x-detail-list>
+
+                    <p class="mt-4 text-xs text-slate-500">
+                        These details are maintained by an administrator. If something is wrong,
+                        ask for it to be corrected rather than working around it — this is the
+                        identity printed on results you validate.
+                    </p>
+                </div>
+            </div>
+        </x-card>
+
+        <x-card title="Your contact details" subtitle="The only part of your staff record you can change yourself.">
+            <form method="POST" action="{{ route('profile.staff.update') }}" class="space-y-4">
+                @csrf
+                @method('PUT')
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <x-form.field name="phone" label="Phone">
+                        <x-form.input name="phone" :value="$user->staff->phone" />
+                    </x-form.field>
+
+                    <x-form.field name="professional_phone" label="Professional phone">
+                        <x-form.input name="professional_phone" :value="$user->staff->professional_phone" />
+                    </x-form.field>
+
+                    <x-form.field name="professional_email" label="Professional email">
+                        <x-form.input type="email" name="professional_email" :value="$user->staff->professional_email" />
+                    </x-form.field>
+
+                    <x-form.field name="address" label="Address">
+                        <x-form.input name="address" :value="$user->staff->address" />
+                    </x-form.field>
+
+                    <div class="sm:col-span-2">
+                        <x-form.field name="professional_bio" label="Professional biography">
+                            <x-form.textarea name="professional_bio" rows="3">{{ old('professional_bio', $user->staff->professional_bio) }}</x-form.textarea>
+                        </x-form.field>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <x-button type="submit" variant="primary" icon="check">Save my details</x-button>
+                </div>
+            </form>
+        </x-card>
+    @endif
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
         <div class="space-y-6 lg:col-span-2">

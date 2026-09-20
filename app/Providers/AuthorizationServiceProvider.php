@@ -10,6 +10,7 @@ use App\Models\LaboratoryResult;
 use App\Models\LaboratoryTest;
 use App\Models\LaboratoryTestParameter;
 use App\Models\Role;
+use App\Models\Staff;
 use App\Models\User;
 use App\Policies\LaboratoryPanelPolicy;
 use App\Policies\LaboratoryRequisitionPolicy;
@@ -17,6 +18,7 @@ use App\Policies\LaboratoryResultPolicy;
 use App\Policies\LaboratoryTestParameterPolicy;
 use App\Policies\LaboratoryTestPolicy;
 use App\Policies\RolePolicy;
+use App\Policies\StaffPolicy;
 use App\Policies\UserPolicy;
 use App\Support\PermissionCatalogue;
 use Illuminate\Support\Facades\Gate;
@@ -40,6 +42,7 @@ class AuthorizationServiceProvider extends ServiceProvider
     /** @var array<class-string, class-string> */
     private const POLICIES = [
         User::class => UserPolicy::class,
+        Staff::class => StaffPolicy::class,
         Role::class => RolePolicy::class,
         LaboratoryTest::class => LaboratoryTestPolicy::class,
         LaboratoryTestParameter::class => LaboratoryTestParameterPolicy::class,

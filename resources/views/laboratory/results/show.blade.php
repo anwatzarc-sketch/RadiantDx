@@ -84,7 +84,7 @@
             <div>
                 <p class="font-semibold">This result is validated and finalised</p>
                 <p class="mt-0.5">
-                    Validated by {{ $result->validatedBy?->name ?? 'a former user' }} on
+                    Validated by {{ $result->actorDisplayName('validated_by') ?? 'a former user' }} on
                     {{ $result->validated_at?->format('d M Y H:i') }}. Ordinary editing is closed; a correction
                     requires an explicit unvalidation, which is recorded.
                 </p>
@@ -386,9 +386,9 @@
                 </div>
 
                 <dl class="mt-3 space-y-1 border-t border-slate-100 pt-3">
-                    <x-detail label="Performed by" :value="$result->performedBy?->name" />
+                    <x-detail label="Performed by" :value="$result->actorDisplayName('performed_by') ?? $result->performedBy?->name" />
                     <x-detail label="Entry completed" :value="$result->performed_at?->format('d M Y H:i')" />
-                    <x-detail label="Validated by" :value="$result->validatedBy?->name" />
+                    <x-detail label="Validated by" :value="$result->actorDisplayName('validated_by') ?? $result->validatedBy?->name" />
                     <x-detail label="Validated at" :value="$result->validated_at?->format('d M Y H:i')" />
                     @if ($result->unvalidated_at)
                         <x-detail label="Last unvalidated by" :value="$result->unvalidatedBy?->name" />

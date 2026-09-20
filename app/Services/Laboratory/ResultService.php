@@ -19,6 +19,7 @@ use App\Models\LaboratoryResultParameter;
 use App\Models\LaboratoryTestParameter;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\AuthenticatedStaffResolver;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -32,6 +33,7 @@ class ResultService
         private readonly ReferenceNumberGenerator $numbers,
         private readonly InterpretationEvaluator $evaluator,
         private readonly AuditLogger $audit,
+        private readonly AuthenticatedStaffResolver $identity,
     ) {}
 
     /**
@@ -133,6 +135,7 @@ class ResultService
 
             if ($result->status === ResultStatus::Completed && $result->performed_at === null) {
                 $result->performed_by = $actor->getKey();
+                $result->recordActor('performed_by', $this->identity->resolve($actor));
                 $result->performed_at = now();
             }
 
@@ -179,6 +182,13 @@ class ResultService
             $result->validation_status = ValidationStatus::Validated;
             $result->validated_by = $actor->getKey();
             $result->validated_at = now();
+
+            /*
+             * The signatory line on every future reprint of this report. Frozen
+             * deliberately: a result validated today by a cardiologist must
+             * still say so if they move to another speciality next year.
+             */
+            $result->recordActor('validated_by', $this->identity->resolve($actor));
             $result->updated_by = $actor->getKey();
             $result->save();
 
@@ -219,6 +229,9 @@ class ResultService
 
             $result->validation_status = ValidationStatus::PendingValidation;
             $result->validated_by = null;
+            // Unvalidating undoes the act of validating, so its snapshot goes
+            // with it. This is the only sanctioned way one is removed.
+            $result->clearActorSnapshot('validated_by');
             $result->validated_at = null;
             $result->unvalidated_by = $actor->getKey();
             $result->unvalidated_at = now();
@@ -253,7 +266,16 @@ class ResultService
         $result->forceFill([
             'last_printed_at' => now(),
             'print_count' => $result->print_count + 1,
-        ])->save();
+            'printed_by' => $actor->getKey(),
+        ]);
+
+        // Only the first print is frozen: it records who issued the report,
+        // which is the fact a reprint cannot change.
+        if (! $result->hasActorSnapshot('printed_by')) {
+            $result->recordActor('printed_by', $this->identity->resolve($actor));
+        }
+
+        $result->save();
 
         $this->audit->record(
             AuditAction::ResultPrinted,

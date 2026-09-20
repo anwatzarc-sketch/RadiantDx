@@ -58,6 +58,15 @@ enum AuditAction: string
     case ResultUnvalidated = 'result.unvalidated';
     case ResultPrinted = 'result.printed';
 
+    case StaffCreated = 'staff.created';
+    case StaffUpdated = 'staff.updated';
+    case StaffStatusChanged = 'staff.status_changed';
+    case StaffImported = 'staff.imported';
+    case StaffExported = 'staff.exported';
+    case StaffAccountCreated = 'staff.account_created';
+    case StaffAccountLinked = 'staff.account_linked';
+    case StaffAccountDisabled = 'staff.account_disabled';
+
     public function label(): string
     {
         return match ($this) {
@@ -102,6 +111,14 @@ enum AuditAction: string
             self::ResultValidated => 'Result validated',
             self::ResultUnvalidated => 'Result unvalidated',
             self::ResultPrinted => 'Result printed',
+            self::StaffCreated => 'Staff record created',
+            self::StaffUpdated => 'Staff record updated',
+            self::StaffStatusChanged => 'Staff status changed',
+            self::StaffImported => 'Staff imported',
+            self::StaffExported => 'Staff exported',
+            self::StaffAccountCreated => 'Account created for staff',
+            self::StaffAccountLinked => 'Account linked to staff',
+            self::StaffAccountDisabled => 'Staff account disabled',
         };
     }
 

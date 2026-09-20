@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Staff;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -25,6 +26,10 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            // Every account belongs to a staff record; users.staff_id is
+            // NOT NULL, so the factory supplies one rather than leaving
+            // callers to remember.
+            'staff_id' => Staff::factory(),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),

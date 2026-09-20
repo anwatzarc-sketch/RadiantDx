@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\AuditAction;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Support\ActorIdentity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
@@ -34,8 +35,7 @@ class AuditLogger
         $actor ??= Auth::user();
 
         return AuditLog::query()->create([
-            'user_id' => $actor?->getKey(),
-            'user_name' => $actor?->name,
+            ...$this->actorAttributes($actor),
             'action' => $action,
             'entity_type' => $entity === null ? null : $entity::class,
             'entity_id' => $entity?->getKey(),
@@ -45,6 +45,41 @@ class AuditLogger
             'ip_address' => Request::ip(),
             'user_agent' => mb_substr((string) Request::userAgent(), 0, 512) ?: null,
         ]);
+    }
+
+    /**
+     * The actor's identity as at the moment of the event.
+     *
+     * `user_name` was always a snapshot of the name; this widens it to the rest
+     * of the professional identity, so an entry written today still reads
+     * correctly after the person changes speciality or leaves.
+     *
+     * The staff record is read directly rather than through
+     * AuthenticatedStaffResolver on purpose: the resolver refuses to resolve a
+     * suspended member of staff, which is right for performing work but wrong
+     * for recording it. Suspending an account is itself an audited event, and
+     * it must record who it happened to.
+     *
+     * A null actor means work with no session; it is recorded as the system
+     * actor rather than left blank.
+     *
+     * @return array<string, mixed>
+     */
+    private function actorAttributes(?User $actor): array
+    {
+        if ($actor === null) {
+            return ActorIdentity::system()->auditAttributes();
+        }
+
+        $staff = $actor->staff;
+
+        if ($staff === null) {
+            // An account with no staff record can still act on administration
+            // screens; record what is known rather than failing the audit write.
+            return ActorIdentity::preMigration($actor->name, $actor->getKey())->auditAttributes();
+        }
+
+        return ActorIdentity::fromStaff($actor, $staff)->auditAttributes();
     }
 
     /**

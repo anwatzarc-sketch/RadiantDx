@@ -78,9 +78,43 @@
                               max="{{ today()->format('Y-m-d') }}" required />
             </x-form.field>
 
-            <x-form.field name="requesting_clinician" label="Requesting clinician">
-                <x-form.input name="requesting_clinician" :value="$requisition->requesting_clinician" />
-            </x-form.field>
+            {{--
+                The requesting clinician is no longer typed. It is resolved from
+                the signed-in account by RequisitionService and frozen onto the
+                requisition, so the report names whoever actually raised it.
+
+                This block is informational: the server resolves identity
+                independently and ignores anything sent for it.
+            --}}
+            <div>
+                <span class="field-label">Requesting clinician</span>
+                <div class="mt-1 flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 ring-1 ring-slate-200 ring-inset">
+                    @if ($requisition->exists && $requisition->actorDisplayName('requested_by'))
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-medium text-slate-900">
+                                {{ $requisition->actorDisplayName('requested_by') }}
+                            </p>
+                            @if ($requisition->actorSpecialityLabel('requested_by'))
+                                <p class="truncate text-xs text-slate-500">
+                                    {{ $requisition->actorSpecialityLabel('requested_by') }}
+                                </p>
+                            @endif
+                        </div>
+                    @elseif (auth()->user()?->staff)
+                        <x-staff-avatar :staff="auth()->user()->staff" size="xs" />
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-medium text-slate-900">
+                                {{ auth()->user()->staff->displayName() }}
+                            </p>
+                            <p class="truncate text-xs text-slate-500">
+                                Automatically identified from your account.
+                            </p>
+                        </div>
+                    @else
+                        <p class="text-sm text-slate-500">Identified from your account when saved.</p>
+                    @endif
+                </div>
+            </div>
 
             <x-form.field name="requesting_department" label="Department">
                 <x-form.input name="requesting_department" :value="$requisition->requesting_department" />

@@ -6,6 +6,9 @@ namespace Database\Seeders;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Enums\StaffStatus;
+use App\Models\Staff;
+use App\Services\Administration\StaffNumberGenerator;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -65,11 +68,22 @@ class SuperAdminSeeder extends Seeder
 
             $isNew = ! $user->exists;
 
+            // Every account needs a staff record behind it: users.staff_id is
+            // required, and the staff record is what the laboratory screens and
+            // the printed report resolve an actor's identity through.
+            $staff = $this->staffFor($user, $name, $email);
+
             $user->fill([
-                'name' => $name,
                 'role_id' => $role->id,
                 'is_active' => true,
             ]);
+
+            // The name is governed by the staff record, not by configuration.
+            // Re-asserting the configured value on every run would silently undo
+            // a name corrected through Staff Management and leave the two out of
+            // step — which is what the laboratory reports read.
+            $user->name = $staff->full_name;
+            $user->staff_id = $staff->getKey();
 
             $user->deleted_at = null;
 
@@ -90,5 +104,41 @@ class SuperAdminSeeder extends Seeder
             $this->command?->warn("Generated temporary password: {$password}");
             $this->command?->warn('Change it immediately after the first sign in.');
         }
+    }
+
+    /**
+     * The staff record behind the super admin account, created on first seed.
+     *
+     * An existing record is left alone apart from ensuring it is active: its
+     * name may well have been corrected since the installation was first
+     * seeded, and configuration must not overwrite that.
+     */
+    private function staffFor(User $user, string $name, string $email): Staff
+    {
+        $staff = $user->staff_id !== null
+            ? Staff::query()->find($user->staff_id)
+            : Staff::query()->where('email', $email)->first();
+
+        if ($staff instanceof Staff) {
+            if (! $staff->permitsSystemAccess()) {
+                $staff->status = StaffStatus::Active;
+                $staff->save();
+            }
+
+            return $staff;
+        }
+
+        $staff = new Staff([
+            'full_name' => $name,
+            'email' => $email,
+            'status' => StaffStatus::Active->value,
+            // Professional details are not invented for a bootstrap account.
+            'needs_review' => true,
+        ]);
+
+        $staff->staff_id = app(StaffNumberGenerator::class)->next();
+        $staff->save();
+
+        return $staff;
     }
 }

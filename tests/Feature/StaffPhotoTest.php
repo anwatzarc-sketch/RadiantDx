@@ -193,6 +193,88 @@ class StaffPhotoTest extends TestCase
         $this->assertNull($staff->fresh()->photo_path);
     }
 
+    // ------------------------------------------------------------------ crop
+
+    #[Test]
+    public function the_chosen_region_is_what_gets_kept(): void
+    {
+        $staff = Staff::factory()->create();
+        $admin = $this->superAdmin();
+
+        // Grey canvas with a red square in the top-right corner.
+        $source = $this->markedImage(900, 600, 640, 80, 220);
+
+        // No crop: the centre is kept, which here is grey.
+        $this->actingAs($admin)->post(route('administration.staff.photo.store', $staff), [
+            'photo' => $source(),
+        ])->assertRedirect();
+
+        $this->assertSame('grey', $this->centreColourOf($staff->fresh()->photo_path));
+
+        // Choosing the red region keeps the red.
+        $this->actingAs($admin)->post(route('administration.staff.photo.store', $staff->fresh()), [
+            'photo' => $source(),
+            'crop_x' => 640,
+            'crop_y' => 80,
+            'crop_size' => 220,
+        ])->assertRedirect();
+
+        $this->assertSame('red', $this->centreColourOf($staff->fresh()->photo_path));
+    }
+
+    #[Test]
+    public function a_crop_beyond_the_image_is_clamped_rather_than_failing(): void
+    {
+        $staff = Staff::factory()->create();
+
+        $this->actingAs($this->superAdmin())
+            ->post(route('administration.staff.photo.store', $staff), [
+                'photo' => $this->image('jpeg', 400, 400),
+                // Nonsense a crafted request might send.
+                'crop_x' => 999999,
+                'crop_y' => 999999,
+                'crop_size' => 999999,
+            ])->assertRedirect();
+
+        [$width, $height] = getimagesizefromstring(
+            Storage::disk('local')->get($staff->fresh()->photo_path)
+        );
+
+        $this->assertSame(512, $width);
+        $this->assertSame(512, $height);
+    }
+
+    #[Test]
+    public function a_negative_crop_is_rejected_by_validation(): void
+    {
+        $staff = Staff::factory()->create();
+
+        $this->actingAs($this->superAdmin())
+            ->post(route('administration.staff.photo.store', $staff), [
+                'photo' => $this->image('jpeg', 400, 400),
+                'crop_x' => -50,
+                'crop_y' => 0,
+                'crop_size' => 100,
+            ])->assertSessionHasErrors('crop_x');
+    }
+
+    #[Test]
+    public function a_partial_crop_falls_back_to_the_centre(): void
+    {
+        $staff = Staff::factory()->create();
+
+        // crop_size missing: the request is incomplete, so it is ignored
+        // entirely rather than half applied.
+        $this->actingAs($this->superAdmin())
+            ->post(route('administration.staff.photo.store', $staff), [
+                'photo' => $this->markedImage(900, 600, 640, 80, 220)(),
+                'crop_x' => 640,
+                'crop_y' => 80,
+            ])->assertRedirect();
+
+        $this->assertSame('grey', $this->centreColourOf($staff->fresh()->photo_path));
+    }
+
     // ---------------------------------------------------------- authorisation
 
     #[Test]
@@ -281,6 +363,45 @@ class StaffPhotoTest extends TestCase
     }
 
     // ------------------------------------------------------------------ helper
+
+    /**
+     * A grey image with a red square at the given position, so a test can tell
+     * which region was kept.
+     *
+     * Returns a factory rather than a file: an UploadedFile is consumed by the
+     * request, so each post needs its own.
+     *
+     * @return callable(): UploadedFile
+     */
+    private function markedImage(int $width, int $height, int $markX, int $markY, int $markSize): callable
+    {
+        $image = imagecreatetruecolor($width, $height);
+        imagefilledrectangle($image, 0, 0, $width, $height, imagecolorallocate($image, 230, 230, 230));
+        imagefilledrectangle(
+            $image, $markX, $markY, $markX + $markSize, $markY + $markSize,
+            imagecolorallocate($image, 220, 40, 40),
+        );
+
+        ob_start();
+        imagejpeg($image, null, 90);
+        $bytes = (string) ob_get_clean();
+        imagedestroy($image);
+
+        return fn (): UploadedFile => UploadedFile::fake()->createWithContent('photo.jpg', $bytes);
+    }
+
+    /** 'red' or 'grey' at the centre of a stored photo. */
+    private function centreColourOf(string $path): string
+    {
+        $image = imagecreatefromstring(Storage::disk('local')->get($path));
+        $rgb = imagecolorat($image, 256, 256);
+        imagedestroy($image);
+
+        $red = ($rgb >> 16) & 255;
+        $green = ($rgb >> 8) & 255;
+
+        return $red > 150 && $green < 100 ? 'red' : 'grey';
+    }
 
     /** A genuinely decodable image of the requested format and size. */
     private function image(string $format, int $width, int $height): UploadedFile

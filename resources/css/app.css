@@ -522,3 +522,45 @@
         break-inside: avoid;
     }
 }
+/* --- Staff Detail & Profile Components --- */
+    .staff-profile-header {
+        @apply flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 bg-slate-50/80 border-b border-slate-100 rounded-t-xl;
+    }
+
+    .staff-avatar {
+        @apply relative flex shrink-0 items-center justify-center rounded-full bg-slate-100 ring-2 ring-slate-200/80 overflow-hidden text-slate-500 font-bold uppercase transition-all;
+    }
+
+    .staff-avatar-lg {
+        @apply size-20 text-2xl;
+    }
+
+    .staff-avatar-md {
+        @apply size-12 text-lg;
+    }
+
+    .staff-avatar-sm {
+        @apply size-9 text-xs;
+    }
+
+    /* Premium Staff Badge */
+    .badge-premium {
+        @apply bg-amber-50 text-amber-800 ring-amber-500/30 font-semibold shadow-xs;
+    }
+
+    /* Read-Only Staff Detail Display Grid */
+    .detail-grid {
+        @apply grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4;
+    }
+
+    .detail-item {
+        @apply flex flex-col gap-0.5;
+    }
+
+    .detail-label {
+        @apply text-xs font-semibold text-slate-500 uppercase tracking-wider;
+    }
+
+    .detail-value {
+        @apply text-sm font-medium text-slate-900;
+    }

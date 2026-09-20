@@ -5,16 +5,35 @@
 <x-layouts.admin
     :title="$staff->full_name"
     :breadcrumbs="['Administration' => null, 'Staff' => route('administration.staff.index'), $staff->staff_id => null]"
+    :back="route('administration.staff.index')"
+    back-label="Back to staff"
 >
     <x-page-header
         :title="$staff->displayName()"
         :subtitle="$staff->professionalSummary()"
-        :back="route('administration.staff.index')"
-        back-label="Back to staff"
     >
+        {{-- The person's face, before their name and title. --}}
+        <x-slot:leading>
+            <x-staff-avatar :staff="$staff" size="lg" />
+        </x-slot:leading>
+
         <x-slot:meta>
             <x-badge classes="bg-slate-100 text-slate-700 ring-slate-500/20">{{ $staff->staff_id }}</x-badge>
+
+            @if ($staff->profession)
+                <x-badge classes="bg-brand-100 text-brand-800 ring-brand-600/20" icon="role">
+                    {{ $staff->profession->label() }}
+                </x-badge>
+            @endif
+
             <x-badge :classes="$staff->status->badgeClasses()">{{ $staff->status->label() }}</x-badge>
+
+            @if ($staff->license_status && $staff->license_status !== \App\Enums\LicenseStatus::NotProvided)
+                <x-badge :classes="$staff->license_status->badgeClasses()" icon="shield-check">
+                    Licence {{ $staff->license_status->label() }}
+                </x-badge>
+            @endif
+
             @if ($staff->needs_review)
                 <x-badge classes="bg-amber-100 text-amber-900 ring-amber-600/30" icon="warning">Needs review</x-badge>
             @endif
@@ -84,42 +103,13 @@
 
         <div class="space-y-6">
             <x-card title="Photo">
-                <div class="flex flex-col items-center gap-4">
-                    <x-staff-avatar :staff="$staff" size="xl" />
-
-                    @can('managePhoto', $staff)
-                        {{--
-                            enctype is required for the file to arrive at all;
-                            the staff record comes from the URL, so there is no
-                            field here naming who the photo belongs to.
-                        --}}
-                        <form method="POST" action="{{ route('administration.staff.photo.store', $staff) }}"
-                              enctype="multipart/form-data" class="w-full space-y-3">
-                            @csrf
-
-                            <x-form.field name="photo" label="Upload a photo"
-                                          hint="JPEG, PNG or WebP, up to 4 MB. Cropped square and re-encoded on upload.">
-                                <input type="file" name="photo" id="photo" accept="image/jpeg,image/png,image/webp"
-                                       required class="field-control" />
-                            </x-form.field>
-
-                            <x-button type="submit" variant="primary" icon="arrow-up" class="w-full">
-                                {{ $staff->photo_path ? 'Replace photo' : 'Upload photo' }}
-                            </x-button>
-                        </form>
-
-                        @if ($staff->photo_path)
-                            <form method="POST" action="{{ route('administration.staff.photo.destroy', $staff) }}"
-                                  class="w-full">
-                                @csrf
-                                @method('DELETE')
-                                <x-button type="submit" variant="secondary" icon="trash" class="w-full">
-                                    Remove photo
-                                </x-button>
-                            </form>
-                        @endif
-                    @endcan
-                </div>
+                @can('managePhoto', $staff)
+                    <x-staff-photo-upload :staff="$staff" />
+                @else
+                    <div class="flex flex-col items-center gap-3">
+                        <x-staff-avatar :staff="$staff" size="xl" />
+                    </div>
+                @endcan
             </x-card>
 
             <x-card title="System access">

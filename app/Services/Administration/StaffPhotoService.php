@@ -65,16 +65,20 @@ class StaffPhotoService
     /**
      * Validates, re-encodes and stores a new photograph.
      *
+     * @param  array{x: int, y: int, size: int}|null  $crop  the region the person
+     *              chose, in the image's own pixels. Treated as a preference and
+     *              clamped to the real bounds — a crop arriving from a browser is
+     *              input like any other. Null centre-crops.
      * @return string the stored path, relative to the private disk
      *
      * @throws WorkflowViolationException when the upload is not a usable image
      */
-    public function store(Staff $staff, UploadedFile $file, User $actor): string
+    public function store(Staff $staff, UploadedFile $file, User $actor, ?array $crop = null): string
     {
         $source = $this->decode($file);
 
         try {
-            $encoded = $this->reEncode($source);
+            $encoded = $this->reEncode($source, $crop);
         } finally {
             imagedestroy($source);
         }
@@ -207,19 +211,46 @@ class StaffPhotoService
     }
 
     /**
+     * The square region to keep, as [x, y, side] in source pixels.
+     *
+     * A crop chosen in the browser is input, so it is clamped rather than
+     * believed: the side is bounded by the smaller edge, and the origin is
+     * bounded so the square cannot run past the image. A missing, malformed or
+     * unusable crop falls back to the centre, which is what a client with no
+     * JavaScript gets.
+     *
+     * @param  array{x: int, y: int, size: int}|null  $crop
+     * @return array{0: int, 1: int, 2: int}
+     */
+    private function cropRegion(int $width, int $height, ?array $crop): array
+    {
+        $maxSide = min($width, $height);
+
+        if ($crop === null) {
+            return [(int) (($width - $maxSide) / 2), (int) (($height - $maxSide) / 2), $maxSide];
+        }
+
+        $side = (int) max(self::MIN_SOURCE_DIMENSION, min($maxSide, $crop['size']));
+
+        $x = (int) max(0, min($width - $side, $crop['x']));
+        $y = (int) max(0, min($height - $side, $crop['y']));
+
+        return [$x, $y, $side];
+    }
+
+    /**
      * Writes the decoded pixels out as a square JPEG.
      *
      * Everything that is not a pixel is lost here — metadata, trailing bytes,
      * comment segments — which is the point.
      */
-    private function reEncode(\GdImage $source): string
+    private function reEncode(\GdImage $source, ?array $crop = null): string
     {
         $width = imagesx($source);
         $height = imagesy($source);
-        $side = min($width, $height);
 
-        // Centre crop to a square, then scale. Cropping rather than padding
-        // keeps faces filling the frame in a directory listing.
+        [$sourceX, $sourceY, $side] = $this->cropRegion($width, $height, $crop);
+
         $canvas = imagecreatetruecolor(self::OUTPUT_SIZE, self::OUTPUT_SIZE);
 
         // Transparent source pixels flatten onto white rather than black.
@@ -230,8 +261,7 @@ class StaffPhotoService
             $canvas,
             $source,
             0, 0,
-            (int) (($width - $side) / 2),
-            (int) (($height - $side) / 2),
+            $sourceX, $sourceY,
             self::OUTPUT_SIZE, self::OUTPUT_SIZE,
             $side, $side,
         );

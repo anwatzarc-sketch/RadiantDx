@@ -27,19 +27,13 @@
         --}}
         <x-card title="Professional identity" subtitle="How you are identified on laboratory reports.">
             <div class="flex flex-col gap-6 sm:flex-row sm:items-start">
-                <div class="flex flex-col items-center gap-3">
-                    <x-staff-avatar :staff="$user->staff" size="lg" />
-
+                <div class="w-full sm:w-64">
                     @can('managePhoto', $user->staff)
-                        <form method="POST" action="{{ route('administration.staff.photo.store', $user->staff) }}"
-                              enctype="multipart/form-data" class="w-full space-y-2">
-                            @csrf
-                            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
-                                   required class="field-control text-xs" />
-                            <x-button type="submit" size="sm" variant="secondary" class="w-full">
-                                Update photo
-                            </x-button>
-                        </form>
+                        <x-staff-photo-upload :staff="$user->staff" compact />
+                    @else
+                        <div class="flex flex-col items-center gap-3">
+                            <x-staff-avatar :staff="$user->staff" size="lg" />
+                        </div>
                     @endcan
                 </div>
 

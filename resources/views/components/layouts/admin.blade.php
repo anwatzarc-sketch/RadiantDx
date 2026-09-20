@@ -1,6 +1,8 @@
 @props([
     'title' => null,
     'breadcrumbs' => [],
+    'back' => null,
+    'backLabel' => 'Back',
 ])
 
 {{--
@@ -165,7 +167,13 @@
         <div class="flex min-w-0 flex-1 flex-col">
             <main class="flex-1 px-4 py-6 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-7xl">
-                    <nav aria-label="Breadcrumb" class="mb-4">
+                    {{--
+                        The breadcrumb row also carries the page's "back" link
+                        when one is given, so the two navigation affordances sit
+                        together and the page title starts a line higher.
+                    --}}
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                    <nav aria-label="Breadcrumb">
                         <ol class="flex items-center gap-1.5 text-sm text-slate-500">
                             <li class="hidden sm:block">
                                 <a href="{{ route('dashboard') }}" class="transition hover:text-brand-700">Home</a>
@@ -185,6 +193,15 @@
                             @endif
                         </ol>
                     </nav>
+
+                    @if ($back)
+                        <a href="{{ $back }}"
+                           class="inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition hover:text-brand-700">
+                            <x-icon name="arrow-left" class="size-3.5" />
+                            {{ $backLabel }}
+                        </a>
+                    @endif
+                    </div>
 
                     <div class="space-y-6">
                         <x-flash />

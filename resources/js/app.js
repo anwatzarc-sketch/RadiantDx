@@ -209,6 +209,165 @@ Alpine.data('confirmDialog', () => ({
 }));
 
 /**
+ * Profile photograph chooser with a visible crop region.
+ *
+ * Shows the picked file immediately and lets the person choose which part of it
+ * is kept, rather than having a centre crop decided for them — a photograph
+ * where the face is off to one side is the normal case, not the exception.
+ *
+ * The model is a fixed square viewport with the image moving behind it: drag to
+ * pan, slider to zoom. What leaves the browser is only the crop rectangle in
+ * the image's own pixel coordinates; the file itself is uploaded untouched and
+ * the server decodes, crops and re-encodes it. The crop is a preference, never
+ * a trusted instruction — the server clamps it to the real image bounds.
+ *
+ * Without JavaScript the file input still submits and the server falls back to
+ * a centre crop, so this is an enhancement rather than a dependency.
+ */
+Alpine.data('photoCropper', (config = {}) => ({
+    viewport: config.viewport ?? 256,
+
+    src: null,
+    naturalWidth: 0,
+    naturalHeight: 0,
+
+    // Scale that makes the image exactly cover the viewport; zoom multiplies it.
+    baseScale: 1,
+    zoom: 1,
+    offsetX: 0,
+    offsetY: 0,
+
+    dragging: false,
+    startX: 0,
+    startY: 0,
+
+    get hasImage() {
+        return this.src !== null && this.naturalWidth > 0;
+    },
+
+    get displayScale() {
+        return this.baseScale * this.zoom;
+    },
+
+    get imageStyle() {
+        return {
+            width: `${this.naturalWidth * this.displayScale}px`,
+            height: `${this.naturalHeight * this.displayScale}px`,
+            transform: `translate(${this.offsetX}px, ${this.offsetY}px)`,
+        };
+    },
+
+    pick(event) {
+        const file = event.target.files?.[0];
+
+        if (!file) {
+            this.reset();
+            return;
+        }
+
+        // Anything that is not a readable image is left to the server to
+        // refuse; this only decides whether a preview can be shown.
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            const image = new Image();
+
+            image.onload = () => {
+                this.src = image.src;
+                this.naturalWidth = image.naturalWidth;
+                this.naturalHeight = image.naturalHeight;
+                this.baseScale = this.viewport / Math.min(image.naturalWidth, image.naturalHeight);
+                this.zoom = 1;
+                this.centre();
+            };
+
+            image.onerror = () => this.reset();
+            image.src = String(reader.result);
+        };
+
+        reader.onerror = () => this.reset();
+        reader.readAsDataURL(file);
+    },
+
+    reset() {
+        this.src = null;
+        this.naturalWidth = 0;
+        this.naturalHeight = 0;
+        this.zoom = 1;
+        this.offsetX = 0;
+        this.offsetY = 0;
+    },
+
+    centre() {
+        this.offsetX = (this.viewport - this.naturalWidth * this.displayScale) / 2;
+        this.offsetY = (this.viewport - this.naturalHeight * this.displayScale) / 2;
+        this.clamp();
+    },
+
+    /** Keeps the image covering the viewport, so no blank corner can be cropped. */
+    clamp() {
+        const minX = this.viewport - this.naturalWidth * this.displayScale;
+        const minY = this.viewport - this.naturalHeight * this.displayScale;
+
+        this.offsetX = Math.min(0, Math.max(minX, this.offsetX));
+        this.offsetY = Math.min(0, Math.max(minY, this.offsetY));
+    },
+
+    onZoom() {
+        // Zoom about the centre of the viewport rather than the image origin,
+        // so the part being looked at stays put.
+        const centreX = this.viewport / 2 - this.offsetX;
+        const centreY = this.viewport / 2 - this.offsetY;
+        const previous = this.displayScale;
+
+        this.$nextTick(() => {
+            const ratio = this.displayScale / previous;
+            this.offsetX = this.viewport / 2 - centreX * ratio;
+            this.offsetY = this.viewport / 2 - centreY * ratio;
+            this.clamp();
+            this.sync();
+        });
+    },
+
+    startDrag(event) {
+        if (!this.hasImage) return;
+
+        this.dragging = true;
+        const point = event.touches?.[0] ?? event;
+        this.startX = point.clientX - this.offsetX;
+        this.startY = point.clientY - this.offsetY;
+    },
+
+    drag(event) {
+        if (!this.dragging) return;
+
+        event.preventDefault();
+        const point = event.touches?.[0] ?? event;
+        this.offsetX = point.clientX - this.startX;
+        this.offsetY = point.clientY - this.startY;
+        this.clamp();
+    },
+
+    endDrag() {
+        if (!this.dragging) return;
+
+        this.dragging = false;
+        this.sync();
+    },
+
+    /** Writes the crop rectangle, in the image's own pixels, into the form. */
+    sync() {
+        if (!this.hasImage) return;
+
+        const scale = this.displayScale;
+
+        this.$refs.cropX.value = Math.max(0, Math.round(-this.offsetX / scale));
+        this.$refs.cropY.value = Math.max(0, Math.round(-this.offsetY / scale));
+        this.$refs.cropSize.value = Math.max(1, Math.round(this.viewport / scale));
+    },
+}));
+
+/**
  * Shared controlled-vocabulary selector.
  *
  * Backs <x-form.shared-enum-select>. Options are fetched from the enum

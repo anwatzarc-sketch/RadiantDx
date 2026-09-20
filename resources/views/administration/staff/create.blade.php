@@ -1,12 +1,12 @@
 <x-layouts.admin
     title="Add staff"
     :breadcrumbs="['Administration' => null, 'Staff' => route('administration.staff.index'), 'Add' => null]"
+    :back="route('administration.staff.index')"
+    back-label="Back to staff"
 >
     <x-page-header
         title="Add staff"
         subtitle="The staff identifier is issued automatically once the record is saved."
-        :back="route('administration.staff.index')"
-        back-label="Back to staff"
     />
 
     <form method="POST" action="{{ route('administration.staff.store') }}" class="space-y-6">

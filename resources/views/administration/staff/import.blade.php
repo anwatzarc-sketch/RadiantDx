@@ -1,12 +1,12 @@
 <x-layouts.admin
     title="Import staff"
     :breadcrumbs="['Administration' => null, 'Staff' => route('administration.staff.index'), 'Import' => null]"
+    :back="route('administration.staff.index')"
+    back-label="Back to staff"
 >
     <x-page-header
         title="Import staff"
         subtitle="Upload a CSV, review exactly what it would do, then commit."
-        :back="route('administration.staff.index')"
-        back-label="Back to staff"
     />
 
     <x-card title="Upload">

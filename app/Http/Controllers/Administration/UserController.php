@@ -6,9 +6,13 @@ namespace App\Http\Controllers\Administration;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Administration\UserRequest;
+use App\Models\AuditLog;
 use App\Models\Role;
+use App\Models\Staff;
 use App\Models\User;
 use App\Services\Administration\UserService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -47,7 +51,28 @@ class UserController extends Controller
 
         return view('administration.users.create', [
             'roles' => Role::query()->active()->orderBy('name')->get(),
+            'staff' => $this->staffAwaitingAccounts(),
         ]);
+    }
+
+    /**
+     * Staff who may still be given an account.
+     *
+     * Only Active standing permits system access, and `users.staff_id` carries
+     * a plain unique index, so one staff record supports one account for good.
+     * The existence check therefore has to see soft-deleted accounts too: such
+     * a row still occupies the staff_id, and offering it here would produce a
+     * duplicate key error on submit rather than a validation message.
+     *
+     * @return EloquentCollection<int, Staff>
+     */
+    private function staffAwaitingAccounts(): EloquentCollection
+    {
+        return Staff::query()
+            ->active()
+            ->whereDoesntHave('user', fn (Builder $query) => $query->withTrashed())
+            ->orderBy('full_name')
+            ->get(['id', 'staff_code', 'full_name', 'position']);
     }
 
     public function store(UserRequest $request): RedirectResponse
@@ -67,7 +92,7 @@ class UserController extends Controller
 
         return view('administration.users.show', [
             'user' => $user->load('role.permissions'),
-            'activity' => \App\Models\AuditLog::query()
+            'activity' => AuditLog::query()
                 ->where('user_id', $user->getKey())
                 ->latest('created_at')
                 ->limit(15)

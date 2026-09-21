@@ -31,7 +31,7 @@
                 Two things this import will not do. It never creates sign-in accounts — those are
                 created one at a time from a staff profile, because a spreadsheet that has been
                 emailed around should not be able to mint credentials. And it ignores any
-                <span class="font-mono">staff_id</span> column: identifiers are issued by the
+                <span class="font-mono">staff_code</span> column: identifiers are issued by the
                 system, never taken from a file. An existing record is matched on
                 <span class="font-mono">employee_id</span>.
             </p>
@@ -105,7 +105,7 @@
                                         <td class="font-mono text-xs">{{ $row['line'] }}</td>
                                         <td>{{ $row['name'] }}</td>
                                         <td class="font-mono text-xs">
-                                            {{ $row['staff_id'] ?? 'issued on commit' }}
+                                            {{ $row['staff_code'] ?? 'issued on commit' }}
                                         </td>
                                         <td>{{ $row['attributes']['profession'] ?? '—' }}</td>
                                     </tr>

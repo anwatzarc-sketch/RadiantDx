@@ -102,7 +102,7 @@ class StaffPhotoController extends Controller
 
         return Storage::disk('local')->response(
             $staff->photo_path,
-            "staff-{$staff->staff_id}.jpg",
+            "staff-{$staff->staff_code}.jpg",
             [
                 'Content-Type' => 'image/jpeg',
                 // Personal data: cacheable by the browser that fetched it,

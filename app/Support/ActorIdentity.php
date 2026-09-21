@@ -6,13 +6,14 @@ namespace App\Support;
 
 use App\Models\Staff;
 use App\Models\User;
+use App\Services\AuthenticatedStaffResolver;
 
 /**
  * Who performed an action, resolved once and thereafter unchangeable.
  *
  * This is the only representation of a workflow actor in the application.
  * Nothing constructs it from request data: it comes from
- * {@see \App\Services\AuthenticatedStaffResolver} reading the authenticated
+ * {@see AuthenticatedStaffResolver} reading the authenticated
  * session, or from {@see self::system()} for work with no signed-in person.
  *
  * Readonly because an actor is a fact about a moment. Once a result has been
@@ -51,7 +52,7 @@ final readonly class ActorIdentity
             userId: $user->getKey(),
             staffId: $staff->getKey(),
             name: $staff->full_name,
-            staffNumber: $staff->staff_id,
+            staffNumber: $staff->staff_code,
             title: $staff->title,
             speciality: $staff->speciality?->value,
             specialityLabel: $staff->speciality?->label(),

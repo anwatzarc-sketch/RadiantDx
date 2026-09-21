@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * hold a system account.
  *
  * @property int $id
- * @property string $staff_id
+ * @property string $staff_code
  * @property string $full_name
  * @property StaffStatus $status
  * @property-read User|null $user
@@ -40,7 +40,7 @@ class Staff extends Model
     protected $table = 'staff';
 
     /**
-     * `staff_id` is deliberately absent: it is issued by the server and must
+     * `staff_code` is deliberately absent: it is issued by the server and must
      * never be settable from a request, an import row or a form. See the
      * booted() hook, which refuses to let it change once issued.
      */
@@ -108,7 +108,7 @@ class Staff extends Model
          * catches a stray fill(), an import, and a console session alike.
          */
         static::updating(function (self $staff): void {
-            if ($staff->isDirty('staff_id')) {
+            if ($staff->isDirty('staff_code')) {
                 throw WorkflowViolationException::because(
                     'A staff identifier cannot be changed once it has been issued.'
                 );

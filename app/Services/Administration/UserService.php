@@ -6,6 +6,7 @@ namespace App\Services\Administration;
 
 use App\Enums\AuditAction;
 use App\Exceptions\WorkflowViolationException;
+use App\Models\Staff;
 use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Support\Facades\DB;
@@ -15,18 +16,52 @@ class UserService
 {
     public function __construct(private readonly AuditLogger $audit) {}
 
-    /** @param array<string, mixed> $attributes */
+    /**
+     * Creates an account against a staff record.
+     *
+     * `users.staff_id` is mandatory, so the staff member chosen in the form is
+     * what makes the row writable at all. The two eligibility rules are checked
+     * again here rather than left to the form request: validation reads the
+     * submitted payload, this reads the row about to be written, and the gap
+     * between them is where a staff member gets suspended or given an account
+     * by somebody else.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
     public function create(array $attributes, User $actor): User
     {
-        return DB::transaction(function () use ($attributes, $actor): User {
+        $staff = Staff::query()->findOrFail((int) $attributes['staff_id']);
+
+        if (! $staff->permitsSystemAccess()) {
+            throw WorkflowViolationException::because(
+                "Staff {$staff->staff_code} is {$staff->status->label()} and cannot be given an account."
+            );
+        }
+
+        // withTrashed: users.staff_id carries a plain unique index, so a
+        // soft-deleted account still holds the slot and the insert would fail
+        // on the constraint rather than here.
+        if (User::withTrashed()->where('staff_id', $staff->getKey())->exists()) {
+            throw WorkflowViolationException::because(
+                "Staff {$staff->staff_code} already has an account."
+            );
+        }
+
+        return DB::transaction(function () use ($staff, $attributes, $actor): User {
             $user = new User([
-                'name' => $attributes['name'],
+                // Mirrors the staff record rather than being typed again, so
+                // the two cannot disagree. The same rule applies to accounts
+                // created from a staff profile, and a resync migration depends
+                // on it holding.
+                'name' => $staff->full_name,
                 'email' => mb_strtolower(trim((string) $attributes['email'])),
                 'role_id' => $attributes['role_id'] ?? null,
                 'is_active' => (bool) ($attributes['is_active'] ?? true),
                 'must_change_password' => true,
             ]);
 
+            // Not fillable: assigned from the vetted staff record above.
+            $user->staff_id = $staff->getKey();
             $user->password = Hash::make((string) $attributes['password']);
             $user->email_verified_at = now();
             $user->save();
@@ -34,8 +69,8 @@ class UserService
             $this->audit->record(
                 AuditAction::UserCreated,
                 $user,
-                "User {$user->email} created.",
-                ['role' => $user->roleName()],
+                "User {$user->email} created for staff {$staff->staff_code}.",
+                ['role' => $user->roleName(), 'staff_code' => $staff->staff_code],
                 $actor,
             );
 

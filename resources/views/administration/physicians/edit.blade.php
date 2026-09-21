@@ -17,13 +17,13 @@
 
 <x-layouts.admin
     :title="'Licensing — '.$staff->full_name"
-    :breadcrumbs="['Administration' => null, 'Physicians' => route('administration.physicians.index'), $staff->staff_id => null]"
+    :breadcrumbs="['Administration' => null, 'Physicians' => route('administration.physicians.index'), $staff->staff_code => null]"
     :back="route('administration.staff.show', $staff)"
     back-label="Back to profile"
 >
     <x-page-header
         :title="'Licensing & practice'"
-        :subtitle="$staff->displayName().' · '.$staff->staff_id"
+        :subtitle="$staff->displayName().' · '.$staff->staff_code"
     />
 
     <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">

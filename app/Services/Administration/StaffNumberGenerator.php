@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Administration;
 
 use App\Models\Staff;
+use App\Services\Laboratory\ReferenceNumberGenerator;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Issues staff identifiers in the form STF-000001.
  *
- * This mirrors {@see \App\Services\Laboratory\ReferenceNumberGenerator}, which
+ * This mirrors {@see ReferenceNumberGenerator}, which
  * has issued requisition and result numbers in production: the next value is
  * derived from the highest already issued, read inside the caller's
  * transaction, and the unique index on the column is the actual guarantee.
@@ -37,9 +39,9 @@ class StaffNumberGenerator
     public function next(): string
     {
         $latest = DB::table((new Staff)->getTable())
-            ->where('staff_id', 'like', self::PREFIX.'%')
-            ->orderByDesc('staff_id')
-            ->value('staff_id');
+            ->where('staff_code', 'like', self::PREFIX.'%')
+            ->orderByDesc('staff_code')
+            ->value('staff_code');
 
         $sequence = $latest === null
             ? 1
@@ -66,7 +68,7 @@ class StaffNumberGenerator
 
             try {
                 return $persist($this->next());
-            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            } catch (UniqueConstraintViolationException $e) {
                 // Someone else took this number. Recompute and try again; give
                 // up rather than spin if contention is pathological.
                 if ($attempt >= self::MAX_ATTEMPTS) {

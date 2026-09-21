@@ -7,10 +7,14 @@ namespace Tests\Feature;
 use App\Enums\StaffStatus;
 use App\Exceptions\StaffIdentityException;
 use App\Exceptions\WorkflowViolationException;
+use App\Models\AuditLog;
+use App\Models\LaboratoryRequisition;
 use App\Models\Staff;
 use App\Models\User;
 use App\Services\AuthenticatedStaffResolver;
 use App\Support\ActorIdentity;
+use Database\Seeders\SuperAdminSeeder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreatesStaffUsers;
@@ -39,7 +43,7 @@ class StaffIdentityTest extends TestCase
         $issued = Staff::query()
             ->whereIn('full_name', ['Amina Hassan', 'Bekele Tadesse'])
             ->orderBy('id')
-            ->pluck('staff_id');
+            ->pluck('staff_code');
 
         $this->assertCount(2, $issued);
 
@@ -57,29 +61,29 @@ class StaffIdentityTest extends TestCase
 
         $this->post(route('administration.staff.store'), $this->staffPayload([
             'full_name' => 'Chosen Identifier',
-            'staff_id' => 'STF-999999',
+            'staff_code' => 'STF-999999',
         ]))->assertRedirect();
 
         $staff = Staff::query()->where('full_name', 'Chosen Identifier')->firstOrFail();
 
-        $this->assertNotSame('STF-999999', $staff->staff_id);
-        $this->assertDatabaseMissing('staff', ['staff_id' => 'STF-999999']);
+        $this->assertNotSame('STF-999999', $staff->staff_code);
+        $this->assertDatabaseMissing('staff', ['staff_code' => 'STF-999999']);
     }
 
     #[Test]
     public function a_staff_identifier_cannot_be_changed_once_issued(): void
     {
         $staff = Staff::factory()->create();
-        $original = $staff->staff_id;
+        $original = $staff->staff_code;
 
-        $staff->staff_id = 'STF-000999';
+        $staff->staff_code = 'STF-000999';
 
         $this->expectException(WorkflowViolationException::class);
 
         try {
             $staff->save();
         } finally {
-            $this->assertDatabaseHas('staff', ['id' => $staff->getKey(), 'staff_id' => $original]);
+            $this->assertDatabaseHas('staff', ['id' => $staff->getKey(), 'staff_code' => $original]);
         }
     }
 
@@ -88,9 +92,9 @@ class StaffIdentityTest extends TestCase
     {
         $staff = Staff::factory()->create();
 
-        $this->expectException(\Illuminate\Database\UniqueConstraintViolationException::class);
+        $this->expectException(UniqueConstraintViolationException::class);
 
-        Staff::factory()->create(['staff_id' => $staff->staff_id]);
+        Staff::factory()->create(['staff_code' => $staff->staff_code]);
     }
 
     // ------------------------------------------------------------ user ↔ staff
@@ -124,9 +128,9 @@ class StaffIdentityTest extends TestCase
     }
 
     #[Test]
-    public function staff_id_is_not_mass_assignable_on_a_staff_record(): void
+    public function staff_code_is_not_mass_assignable_on_a_staff_record(): void
     {
-        $this->assertNotContains('staff_id', (new Staff)->getFillable());
+        $this->assertNotContains('staff_code', (new Staff)->getFillable());
     }
 
     // --------------------------------------------------------------- resolver
@@ -146,7 +150,7 @@ class StaffIdentityTest extends TestCase
         $this->assertSame('Dr', $identity->title);
         $this->assertSame('cardiology', $identity->speciality);
         $this->assertSame('Cardiology', $identity->specialityLabel);
-        $this->assertSame($staff->staff_id, $identity->staffNumber);
+        $this->assertSame($staff->staff_code, $identity->staffNumber);
         $this->assertSame(ActorIdentity::PROVENANCE_AUTHENTICATED, $identity->provenance);
         $this->assertSame('Dr Amina Hassan', $identity->displayName());
     }
@@ -342,7 +346,7 @@ class StaffIdentityTest extends TestCase
 
         // A requisition names its actor through the account, as every
         // laboratory screen and the printed report do.
-        $requisition = new \App\Models\LaboratoryRequisition([
+        $requisition = new LaboratoryRequisition([
             'patient_identifier' => 'P-1',
             'patient_name' => 'Test Patient',
             'requested_date' => now()->toDateString(),
@@ -380,7 +384,7 @@ class StaffIdentityTest extends TestCase
                 'full_name' => 'Correct Name',
             ]))->assertRedirect();
 
-        $cascade = \App\Models\AuditLog::query()
+        $cascade = AuditLog::query()
             ->where('entity_type', Staff::class)
             ->where('entity_id', $staff->getKey())
             ->get()
@@ -411,7 +415,7 @@ class StaffIdentityTest extends TestCase
         // The seeder is idempotent and re-asserts configuration on every run.
         // The name must not be part of that, or correcting it in Staff
         // Management would be silently undone by the next deploy.
-        $this->seed(\Database\Seeders\SuperAdminSeeder::class);
+        $this->seed(SuperAdminSeeder::class);
 
         $email = mb_strtolower(trim((string) config('laboratory.super_admin.email')));
         $user = User::query()->where('email', $email)->firstOrFail();
@@ -419,7 +423,7 @@ class StaffIdentityTest extends TestCase
         $user->staff->forceFill(['full_name' => 'Corrected Name'])->save();
         $user->forceFill(['name' => 'Corrected Name'])->save();
 
-        $this->seed(\Database\Seeders\SuperAdminSeeder::class);
+        $this->seed(SuperAdminSeeder::class);
 
         $this->assertSame('Corrected Name', $user->fresh()->name);
         $this->assertSame('Corrected Name', $user->fresh()->staff->full_name);
@@ -436,7 +440,7 @@ class StaffIdentityTest extends TestCase
         // A requisition is enough to establish history: created_by is one of
         // the actor columns hasLaboratoryHistory() checks, and it needs no
         // result/item chain to exist.
-        $requisition = new \App\Models\LaboratoryRequisition([
+        $requisition = new LaboratoryRequisition([
             'patient_identifier' => 'P-1',
             'patient_name' => 'Test Patient',
             'requested_date' => now()->toDateString(),
@@ -538,7 +542,7 @@ class StaffIdentityTest extends TestCase
             ->post(route('administration.staff.store'), $this->staffPayload(['full_name' => 'New Person']))
             ->assertRedirect();
 
-        $entry = \App\Models\AuditLog::query()->latest('id')->firstOrFail();
+        $entry = AuditLog::query()->latest('id')->firstOrFail();
 
         $this->assertSame($actorStaff->getKey(), $entry->actor_staff_id);
         $this->assertSame('Auditing Admin', $entry->user_name);

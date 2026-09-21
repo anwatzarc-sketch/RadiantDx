@@ -126,7 +126,7 @@
                                 <td>
                                     <a href="{{ route('administration.staff.show', $member) }}"
                                        class="font-mono text-xs font-semibold text-brand-700 hover:underline">
-                                        {{ $member->staff_id }}
+                                        {{ $member->staff_code }}
                                     </a>
                                 </td>
                                 <td>

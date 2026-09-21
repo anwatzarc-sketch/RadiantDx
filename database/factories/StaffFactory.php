@@ -25,7 +25,7 @@ class StaffFactory extends Factory
             // Factories bypass the service, so the identifier is generated
             // here. Production code never does this: it goes through
             // StaffService, which issues the number inside a transaction.
-            'staff_id' => 'STF-'.str_pad((string) fake()->unique()->numberBetween(1, 999999), 6, '0', STR_PAD_LEFT),
+            'staff_code' => 'STF-'.str_pad((string) fake()->unique()->numberBetween(1, 999999), 6, '0', STR_PAD_LEFT),
             'full_name' => fake()->name(),
             'gender' => fake()->randomElement(Gender::cases())->value,
             'title' => fake()->randomElement(['Dr', 'Mr', 'Ms', null]),

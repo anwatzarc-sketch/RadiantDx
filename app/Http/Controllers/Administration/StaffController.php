@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Administration;
 
-use App\Enums\LicenseStatus;
-use App\Enums\Profession;
-use App\Enums\Speciality;
 use App\Enums\StaffStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Administration\StaffRequest;
@@ -14,10 +11,12 @@ use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Role;
 use App\Models\Staff;
+use App\Rules\SharedEnumValue;
 use App\Services\Administration\StaffService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class StaffController extends Controller
@@ -52,7 +51,7 @@ class StaffController extends Controller
 
         return redirect()
             ->route('administration.staff.show', $staff)
-            ->with('success', "Staff {$staff->staff_id} created.");
+            ->with('success', "Staff {$staff->staff_code} created.");
     }
 
     public function show(Request $request, Staff $staff): View
@@ -88,7 +87,7 @@ class StaffController extends Controller
 
         return redirect()
             ->route('administration.staff.show', $staff)
-            ->with('success', "Staff {$staff->staff_id} updated.");
+            ->with('success', "Staff {$staff->staff_code} updated.");
     }
 
     /**
@@ -103,7 +102,7 @@ class StaffController extends Controller
         $this->authorize('changeStatus', $staff);
 
         $validated = $request->validate([
-            'status' => ['required', new \App\Rules\SharedEnumValue('StaffStatus')],
+            'status' => ['required', new SharedEnumValue('StaffStatus')],
         ]);
 
         $this->staff->setStatus(
@@ -112,14 +111,14 @@ class StaffController extends Controller
             $request->user(),
         );
 
-        return back()->with('success', "Staff {$staff->staff_id} is now {$staff->status->label()}.");
+        return back()->with('success', "Staff {$staff->staff_code} is now {$staff->status->label()}.");
     }
 
     public function destroy(Request $request, Staff $staff): RedirectResponse
     {
         $this->authorize('delete', $staff);
 
-        $staffNumber = $staff->staff_id;
+        $staffNumber = $staff->staff_code;
         $this->staff->delete($staff, $request->user());
 
         return redirect()
@@ -143,7 +142,7 @@ class StaffController extends Controller
                 $query->where(function (Builder $builder) use ($term): void {
                     $builder
                         ->where('full_name', 'like', "%{$term}%")
-                        ->orWhere('staff_id', 'like', "%{$term}%")
+                        ->orWhere('staff_code', 'like', "%{$term}%")
                         ->orWhere('employee_id', 'like', "%{$term}%")
                         ->orWhere('email', 'like', "%{$term}%")
                         ->orWhere('phone', 'like', "%{$term}%")
@@ -172,7 +171,7 @@ class StaffController extends Controller
     {
         return [
             'departments' => Department::query()->active()->orderBy('name')->get(),
-            'supervisors' => Staff::query()->active()->orderBy('full_name')->get(['id', 'staff_id', 'full_name']),
+            'supervisors' => Staff::query()->active()->orderBy('full_name')->get(['id', 'staff_code', 'full_name']),
         ];
     }
 
@@ -183,7 +182,7 @@ class StaffController extends Controller
      * single question, and splitting it by subsystem would make it answerable
      * only by reading two screens.
      */
-    private function activityFor(Staff $staff): \Illuminate\Support\Collection
+    private function activityFor(Staff $staff): Collection
     {
         return AuditLog::query()
             ->where(function (Builder $query) use ($staff): void {

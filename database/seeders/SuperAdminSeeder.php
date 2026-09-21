@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\StaffStatus;
 use App\Models\Permission;
 use App\Models\Role;
-use App\Enums\StaffStatus;
 use App\Models\Staff;
-use App\Services\Administration\StaffNumberGenerator;
 use App\Models\User;
+use App\Services\Administration\StaffNumberGenerator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -136,7 +136,7 @@ class SuperAdminSeeder extends Seeder
             'needs_review' => true,
         ]);
 
-        $staff->staff_id = app(StaffNumberGenerator::class)->next();
+        $staff->staff_code = app(StaffNumberGenerator::class)->next();
         $staff->save();
 
         return $staff;

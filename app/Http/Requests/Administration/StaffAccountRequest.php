@@ -27,6 +27,7 @@ class StaffAccountRequest extends FormRequest
      */
     private const IGNORED_IDENTITY_FIELDS = [
         'staff_id',
+        'staff_code',
         'staff',
         'user_id',
         'name',

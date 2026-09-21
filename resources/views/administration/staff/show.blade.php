@@ -4,7 +4,7 @@
 
 <x-layouts.admin
     :title="$staff->full_name"
-    :breadcrumbs="['Administration' => null, 'Staff' => route('administration.staff.index'), $staff->staff_id => null]"
+    :breadcrumbs="['Administration' => null, 'Staff' => route('administration.staff.index'), $staff->staff_code => null]"
     :back="route('administration.staff.index')"
     back-label="Back to staff"
 >
@@ -18,7 +18,7 @@
         </x-slot:leading>
 
         <x-slot:meta>
-            <x-badge classes="bg-slate-100 text-slate-700 ring-slate-500/20">{{ $staff->staff_id }}</x-badge>
+            <x-badge classes="bg-slate-100 text-slate-700 ring-slate-500/20">{{ $staff->staff_code }}</x-badge>
 
             @if ($staff->profession)
                 <x-badge classes="bg-brand-100 text-brand-800 ring-brand-600/20" icon="role">

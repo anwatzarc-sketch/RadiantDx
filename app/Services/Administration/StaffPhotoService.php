@@ -66,9 +66,9 @@ class StaffPhotoService
      * Validates, re-encodes and stores a new photograph.
      *
      * @param  array{x: int, y: int, size: int}|null  $crop  the region the person
-     *              chose, in the image's own pixels. Treated as a preference and
-     *              clamped to the real bounds — a crop arriving from a browser is
-     *              input like any other. Null centre-crops.
+     *                                                       chose, in the image's own pixels. Treated as a preference and
+     *                                                       clamped to the real bounds — a crop arriving from a browser is
+     *                                                       input like any other. Null centre-crops.
      * @return string the stored path, relative to the private disk
      *
      * @throws WorkflowViolationException when the upload is not a usable image
@@ -102,7 +102,7 @@ class StaffPhotoService
             $this->audit->record(
                 AuditAction::StaffUpdated,
                 $staff,
-                "Profile photo ".($previous === null ? 'added' : 'changed')." for staff {$staff->staff_id}.",
+                'Profile photo '.($previous === null ? 'added' : 'changed')." for staff {$staff->staff_code}.",
                 ['photo' => $previous === null ? 'added' : 'changed'],
                 $actor,
             );
@@ -133,7 +133,7 @@ class StaffPhotoService
             $this->audit->record(
                 AuditAction::StaffUpdated,
                 $staff,
-                "Profile photo removed for staff {$staff->staff_id}.",
+                "Profile photo removed for staff {$staff->staff_code}.",
                 ['photo' => 'removed'],
                 $actor,
             );

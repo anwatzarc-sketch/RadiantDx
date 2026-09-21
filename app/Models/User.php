@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Exceptions\WorkflowViolationException;
+use App\Services\AuthenticatedStaffResolver;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -21,7 +23,7 @@ use Illuminate\Notifications\Notifiable;
  * @property int|null $role_id
  * @property bool $is_active
  * @property bool $must_change_password
- * @property \Illuminate\Support\Carbon|null $last_login_at
+ * @property Carbon|null $last_login_at
  * @property string|null $last_login_ip
  * @property-read Role|null $role
  */
@@ -89,10 +91,11 @@ class User extends Authenticatable
     /**
      * The professional identity behind this account.
      *
-     * Every account has one. `staff_id` is absent from $fillable on purpose:
-     * it is set from trusted route context when an account is created against
-     * a staff profile, never from a request body, and it is refused on update
-     * by the booted() hook below.
+     * Every account has one. `staff_id` is absent from $fillable on purpose: it
+     * is assigned explicitly, either from trusted route context when created
+     * against a staff profile or from the validated field on the users create
+     * form, never by mass assignment. Either way it is refused on update by the
+     * booted() hook below.
      *
      * @return BelongsTo<Staff, $this>
      */
@@ -106,7 +109,7 @@ class User extends Authenticatable
      *
      * A convenience over the resolver for display; it does NOT replace it.
      * Anything recording who performed an action must go through
-     * {@see \App\Services\AuthenticatedStaffResolver} so the status rules are
+     * {@see AuthenticatedStaffResolver} so the status rules are
      * applied in one place.
      */
     public function staffDisplayName(): string

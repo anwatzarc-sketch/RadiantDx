@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 /**
  * Serves both creation and editing of a staff record.
  *
- * `staff_id` is absent from the rules on purpose. It is issued by the server
+ * `staff_code` is absent from the rules on purpose. It is issued by the server
  * and any value sent for it is discarded by prepareForValidation() before
  * validation runs, so a crafted payload cannot choose or change an identifier.
  */
@@ -101,6 +101,8 @@ class StaffRequest extends FormRequest
          * merely omitting it from rules() means a payload carrying it cannot
          * reach the service even if a future change starts passing all() through.
          */
+        $this->request->remove('staff_code');
+        // The pre-rename spelling, in case a cached page or a stale client sends it.
         $this->request->remove('staff_id');
         $this->request->remove('needs_review');
 

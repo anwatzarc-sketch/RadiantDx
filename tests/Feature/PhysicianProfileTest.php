@@ -7,11 +7,13 @@ namespace Tests\Feature;
 use App\Enums\LicenseStatus;
 use App\Enums\RegistrationStatus;
 use App\Enums\StaffStatus;
+use App\Http\Requests\Profile\UpdateOwnStaffProfileRequest;
 use App\Models\Staff;
 use App\Models\StaffQualification;
 use App\Services\Administration\LicenseStatusDeriver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreatesStaffUsers;
 use Tests\TestCase;
@@ -39,8 +41,8 @@ class PhysicianProfileTest extends TestCase
         $this->assertSame('MD-12345', $staff->fresh()->professional_license);
 
         // No second identity table anywhere.
-        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasTable('physicians'));
-        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasTable('doctors'));
+        $this->assertFalse(Schema::hasTable('physicians'));
+        $this->assertFalse(Schema::hasTable('doctors'));
     }
 
     #[Test]
@@ -275,7 +277,7 @@ class PhysicianProfileTest extends TestCase
         ]);
 
         $original = $staff->only([
-            'staff_id', 'full_name', 'profession', 'speciality', 'position',
+            'staff_code', 'full_name', 'profession', 'speciality', 'position',
             'department_id', 'employee_id', 'status', 'license_status',
         ]);
 
@@ -287,7 +289,7 @@ class PhysicianProfileTest extends TestCase
                 'phone' => '+251911111111',
 
                 // Everything a crafted request might try.
-                'staff_id' => 'STF-999999',
+                'staff_code' => 'STF-999999',
                 'full_name' => 'Promoted Person',
                 'profession' => 'physician',
                 'speciality' => 'cardiology',
@@ -320,9 +322,9 @@ class PhysicianProfileTest extends TestCase
     #[Test]
     public function the_self_editable_allow_list_holds_only_personal_fields(): void
     {
-        $allowed = \App\Http\Requests\Profile\UpdateOwnStaffProfileRequest::SELF_EDITABLE;
+        $allowed = UpdateOwnStaffProfileRequest::SELF_EDITABLE;
 
-        foreach (['staff_id', 'full_name', 'profession', 'speciality', 'status',
+        foreach (['staff_code', 'full_name', 'profession', 'speciality', 'status',
             'department_id', 'position', 'employee_id', 'license_status', 'needs_review'] as $administrative) {
             $this->assertNotContains($administrative, $allowed);
         }
@@ -342,7 +344,7 @@ class PhysicianProfileTest extends TestCase
             ->assertOk()
             ->assertSee('Dr Amina Hassan')
             ->assertSee('Cardiology')
-            ->assertSee($staff->staff_id);
+            ->assertSee($staff->staff_code);
     }
 
     // ------------------------------------------------------------------ helper

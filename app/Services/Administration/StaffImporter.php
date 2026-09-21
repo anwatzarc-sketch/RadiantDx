@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Validator;
  *    been emailed around; it must not be able to mint sign-in credentials.
  *    Accounts are created one at a time from a staff profile.
  *  - it never accepts a staff identifier from the file. Identifiers are issued
- *    by the server, so a column called `staff_id` in the upload is ignored
+ *    by the server, so a column called `staff_code` in the upload is ignored
  *    rather than honoured.
  *
  * Every run is analysed first and reported back before anything is written, so
@@ -82,7 +82,7 @@ class StaffImporter
                 'attributes' => $attributes,
                 'existing_id' => $existing?->getKey(),
                 'name' => $attributes['full_name'],
-                'staff_id' => $existing?->staff_id,
+                'staff_code' => $existing?->staff_code,
             ];
 
             $plan[$existing === null ? 'create' : 'update'][] = $entry;

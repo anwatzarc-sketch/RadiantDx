@@ -34,7 +34,7 @@ class StaffService
      * Creates a staff record.
      *
      * $attributes is validated form data and deliberately never contains
-     * `staff_id` — the identifier is issued here, inside the transaction, and
+     * `staff_code` — the identifier is issued here, inside the transaction, and
      * retried if a concurrent request takes the number first.
      *
      * @param  array<string, mixed>  $attributes
@@ -44,13 +44,13 @@ class StaffService
         return DB::transaction(fn (): Staff => $this->numbers->nextWithRetry(
             function (string $staffNumber) use ($attributes, $actor): Staff {
                 $staff = new Staff($this->assignable($attributes));
-                $staff->staff_id = $staffNumber;
+                $staff->staff_code = $staffNumber;
                 $staff->save();
 
                 $this->audit->record(
                     AuditAction::StaffCreated,
                     $staff,
-                    "Staff {$staff->staff_id} ({$staff->full_name}) created.",
+                    "Staff {$staff->staff_code} ({$staff->full_name}) created.",
                     ['profession' => $staff->profession?->value],
                     $actor,
                 );
@@ -94,7 +94,7 @@ class StaffService
             $this->audit->record(
                 AuditAction::StaffUpdated,
                 $staff,
-                "Staff {$staff->staff_id} updated.",
+                "Staff {$staff->staff_code} updated.",
                 ['changed' => $changed],
                 $actor,
             );
@@ -142,7 +142,7 @@ class StaffService
      * The staff record comes from the route, not the request body: the caller
      * has already navigated to a specific staff profile, so the association is
      * established from trusted context. An administrator is never asked to type
-     * or pick a staff identifier, and a `staff_id` in the payload is ignored.
+     * or pick a staff identifier, and a `staff_code` in the payload is ignored.
      *
      * @param  array<string, mixed>  $attributes  username/email, role, status, password
      */
@@ -150,13 +150,13 @@ class StaffService
     {
         if ($staff->user !== null) {
             throw WorkflowViolationException::because(
-                "Staff {$staff->staff_id} already has an account ({$staff->user->email})."
+                "Staff {$staff->staff_code} already has an account ({$staff->user->email})."
             );
         }
 
         if (! $staff->permitsSystemAccess()) {
             throw WorkflowViolationException::because(
-                "Staff {$staff->staff_id} is {$staff->status->label()} and cannot be given an account."
+                "Staff {$staff->staff_code} is {$staff->status->label()} and cannot be given an account."
             );
         }
 
@@ -180,7 +180,7 @@ class StaffService
             $this->audit->record(
                 AuditAction::StaffAccountCreated,
                 $staff,
-                "Account {$user->email} created for staff {$staff->staff_id}.",
+                "Account {$user->email} created for staff {$staff->staff_code}.",
                 ['role' => $user->roleName(), 'user_id' => $user->getKey()],
                 $actor,
             );
@@ -200,13 +200,13 @@ class StaffService
     {
         if ($staff->hasLaboratoryHistory()) {
             throw WorkflowViolationException::because(
-                "Staff {$staff->staff_id} has laboratory activity on record and cannot be deleted. "
+                "Staff {$staff->staff_code} has laboratory activity on record and cannot be deleted. "
                 .'Set their status to Former instead, which keeps historical reports intact.'
             );
         }
 
         DB::transaction(function () use ($staff, $actor): void {
-            $staffNumber = $staff->staff_id;
+            $staffNumber = $staff->staff_code;
             $name = $staff->full_name;
 
             $this->disableAccountFor($staff, $actor);
@@ -254,7 +254,7 @@ class StaffService
         $this->audit->record(
             AuditAction::StaffStatusChanged,
             $staff,
-            "Staff {$staff->staff_id} moved from {$previous->label()} to {$staff->status->label()}.",
+            "Staff {$staff->staff_code} moved from {$previous->label()} to {$staff->status->label()}.",
             ['from' => $previous->value, 'to' => $staff->status->value],
             $actor,
         );
@@ -296,7 +296,7 @@ class StaffService
         $this->audit->record(
             AuditAction::StaffUpdated,
             $staff,
-            "Account name for staff {$staff->staff_id} updated from \"{$previousName}\" to \"{$staff->full_name}\".",
+            "Account name for staff {$staff->staff_code} updated from \"{$previousName}\" to \"{$staff->full_name}\".",
             [
                 'cascade' => 'account_name',
                 'from' => $previousName,
@@ -322,7 +322,7 @@ class StaffService
         $this->audit->record(
             AuditAction::StaffAccountDisabled,
             $staff,
-            "Account {$user->email} disabled because staff {$staff->staff_id} is {$staff->status->label()}.",
+            "Account {$user->email} disabled because staff {$staff->staff_code} is {$staff->status->label()}.",
             ['user_id' => $user->getKey()],
             $actor,
         );

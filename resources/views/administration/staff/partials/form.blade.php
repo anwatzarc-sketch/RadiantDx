@@ -44,7 +44,7 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="font-mono text-sm font-semibold text-slate-900">{{ $staff->staff_id }}</span>
+                    <span class="font-mono text-sm font-semibold text-slate-900">{{ $staff->staff_code }}</span>
                     
                     {{-- Premium Badge --}}
                     <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
@@ -166,7 +166,7 @@
             <x-form.field name="supervisor_id" label="Supervisor">
                 <x-form.select
                     name="supervisor_id"
-                    :options="$supervisors->reject(fn ($s) => $staff && $s->id === $staff->id)->mapWithKeys(fn ($s) => [$s->id => $s->full_name.' ('.$s->staff_id.')'])->all()"
+                    :options="$supervisors->reject(fn ($s) => $staff && $s->id === $staff->id)->mapWithKeys(fn ($s) => [$s->id => $s->full_name.' ('.$s->staff_code.')'])->all()"
                     :value="$value('supervisor_id')"
                     placeholder="No supervisor"
                 />

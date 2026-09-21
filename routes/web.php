@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Administration\RoleController;
 use App\Http\Controllers\Administration\PhysicianController;
+use App\Http\Controllers\Administration\RoleController;
 use App\Http\Controllers\Administration\StaffAccountController;
 use App\Http\Controllers\Administration\StaffController;
 use App\Http\Controllers\Administration\StaffExportController;
@@ -110,7 +110,14 @@ Route::middleware(['auth', 'active'])->group(function (): void {
          *
          * Note the account route: it is nested under a staff record, so which
          * person an account belongs to comes from the URL rather than from a
-         * field anyone can edit.
+         * field anyone can edit. This is the preferred path.
+         *
+         * The users create form binds the same association from a submitted
+         * field instead, because users.staff_id is mandatory and that form had
+         * no way to satisfy it. It is accepted there only on create, only for
+         * an Active staff record that has no account, and it is re-checked in
+         * UserService against the row about to be written. Moving an existing
+         * account to another staff record remains refused everywhere.
          */
         // Physicians are staff, so the directory reads staff records and the
         // profile editor writes them. There is no separate physician entity.

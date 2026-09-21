@@ -14,9 +14,14 @@ use Illuminate\Http\RedirectResponse;
  * Creating the system account for a staff record.
  *
  * The staff record is a route parameter, so the association is established from
- * where the administrator navigated rather than from anything they typed. There
- * is no field anywhere in this flow for choosing which staff record an account
- * belongs to.
+ * where the administrator navigated rather than from anything they typed. This
+ * flow has no field for choosing which staff record an account belongs to, and
+ * StaffAccountRequest strips one if a crafted request supplies it.
+ *
+ * The users create form reaches the same outcome from the other direction, with
+ * a validated staff_id field. That is deliberate -- users.staff_id is mandatory
+ * and that form could not otherwise create anything -- but it is the looser of
+ * the two paths, so prefer this one when starting from a person.
  */
 class StaffAccountController extends Controller
 {

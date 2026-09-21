@@ -12,13 +12,16 @@
 
         <x-card title="Account" icon="profile">
             <div class="space-y-4">
-                @include('administration.users.partials.form', ['user' => null, 'roles' => $roles, 'canChangeRole' => true])
+                @include('administration.users.partials.form', ['user' => null, 'roles' => $roles, 'staff' => $staff, 'canChangeRole' => true])
             </div>
         </x-card>
 
+        {{-- With nothing to bind the account to, submitting could only fail. --}}
         <div class="mt-4 flex justify-end gap-2">
             <x-button :href="route('administration.users.index')">Cancel</x-button>
-            <x-button type="submit" variant="primary">Create user</x-button>
+            @if ($staff->isNotEmpty())
+                <x-button type="submit" variant="primary">Create user</x-button>
+            @endif
         </div>
     </form>
 

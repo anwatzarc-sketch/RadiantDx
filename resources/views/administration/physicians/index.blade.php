@@ -94,7 +94,7 @@
                                 <td>
                                     <a href="{{ route('administration.staff.show', $physician) }}"
                                        class="font-mono text-xs font-semibold text-brand-700 hover:underline">
-                                        {{ $physician->staff_id }}
+                                        {{ $physician->staff_code }}
                                     </a>
                                 </td>
                                 <td>

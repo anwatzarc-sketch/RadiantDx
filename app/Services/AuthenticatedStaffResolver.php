@@ -118,7 +118,7 @@ class AuthenticatedStaffResolver
 
         if (! $staff->permitsSystemAccess()) {
             throw StaffIdentityException::statusForbidsWork(
-                $staff->staff_id,
+                $staff->staff_code,
                 $staff->status->label(),
             );
         }

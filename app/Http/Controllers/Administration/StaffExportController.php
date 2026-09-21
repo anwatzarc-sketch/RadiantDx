@@ -29,7 +29,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class StaffExportController extends Controller
 {
     private const COLUMNS = [
-        'staff_id', 'full_name', 'title', 'gender', 'profession', 'speciality',
+        'staff_code', 'full_name', 'title', 'gender', 'profession', 'speciality',
         'sub_speciality', 'department', 'unit', 'position', 'employee_id',
         'employment_type', 'status', 'phone', 'email', 'professional_license',
         'license_expiry', 'joined_on', 'account_email', 'account_active',
@@ -65,7 +65,7 @@ class StaffExportController extends Controller
             $query->chunk(500, function ($records) use ($handle): void {
                 foreach ($records as $staff) {
                     fputcsv($handle, [
-                        $staff->staff_id,
+                        $staff->staff_code,
                         $staff->full_name,
                         $staff->title,
                         $staff->gender?->label(),

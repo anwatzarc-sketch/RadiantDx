@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Administration;
 
 use App\Enums\AuditAction;
-use App\Enums\LicenseStatus;
-use App\Enums\PhysicianPracticeStatus;
-use App\Enums\Speciality;
+use App\Enums\Profession;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Administration\PhysicianProfileRequest;
 use App\Http\Requests\Administration\StaffQualificationRequest;
@@ -47,7 +45,7 @@ class PhysicianController extends Controller
             ->when($request->string('search')->trim()->value(), function (Builder $query, string $term): void {
                 $query->where(function (Builder $builder) use ($term): void {
                     $builder->where('full_name', 'like', "%{$term}%")
-                        ->orWhere('staff_id', 'like', "%{$term}%")
+                        ->orWhere('staff_code', 'like', "%{$term}%")
                         ->orWhere('professional_license', 'like', "%{$term}%")
                         ->orWhere('registration_number', 'like', "%{$term}%");
                 });
@@ -97,7 +95,7 @@ class PhysicianController extends Controller
             $this->audit->record(
                 AuditAction::StaffUpdated,
                 $staff,
-                "Physician profile updated for staff {$staff->staff_id}.",
+                "Physician profile updated for staff {$staff->staff_code}.",
                 ['changed' => $changed, 'license_status' => $staff->license_status?->value],
                 $request->user(),
             );
@@ -119,7 +117,7 @@ class PhysicianController extends Controller
         $this->audit->record(
             AuditAction::StaffUpdated,
             $staff,
-            "Qualification added for staff {$staff->staff_id}: {$qualification->summary()}.",
+            "Qualification added for staff {$staff->staff_code}: {$qualification->summary()}.",
             ['qualification' => 'added'],
             $request->user(),
         );
@@ -141,7 +139,7 @@ class PhysicianController extends Controller
         $this->audit->record(
             AuditAction::StaffUpdated,
             $staff,
-            "Qualification removed for staff {$staff->staff_id}: {$summary}.",
+            "Qualification removed for staff {$staff->staff_code}: {$summary}.",
             ['qualification' => 'removed'],
             $request->user(),
         );
@@ -155,7 +153,7 @@ class PhysicianController extends Controller
         return array_values(array_map(
             static fn ($case): string => $case->value,
             array_filter(
-                \App\Enums\Profession::cases(),
+                Profession::cases(),
                 static fn ($case): bool => $case->requiresLicence(),
             ),
         ));

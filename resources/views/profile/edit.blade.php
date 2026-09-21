@@ -39,7 +39,7 @@
 
                 <div class="min-w-0 flex-1">
                     <x-detail-list :columns="2">
-                        <x-detail label="Staff ID" :value="$user->staff->staff_id" />
+                        <x-detail label="Staff ID" :value="$user->staff->staff_code" />
                         <x-detail label="Name" :value="$user->staff->displayName()" />
                         <x-detail label="Profession" :value="$user->staff->profession?->label()" />
                         <x-detail label="Speciality" :value="$user->staff->speciality?->label()" />

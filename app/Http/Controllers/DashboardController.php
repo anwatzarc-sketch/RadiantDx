@@ -86,7 +86,9 @@ class DashboardController extends Controller
                     ->count(),
                 'hint' => 'Submitted, specimen not yet collected',
                 'href' => route('laboratory.requisitions.index', ['status' => RequisitionStatus::Submitted->value]),
-                'tone' => 'sky',
+                // Amber: nothing moves here until somebody collects the
+                // specimen. See the tone key in components/stat-card.
+                'tone' => 'amber',
                 'icon' => 'inbox',
             ];
 
@@ -100,8 +102,12 @@ class DashboardController extends Controller
                     ->count(),
                 'hint' => 'Collected or being processed',
                 'href' => route('laboratory.requisitions.index', ['status' => RequisitionStatus::Processing->value]),
-                'tone' => 'amber',
-                'icon' => 'beaker',
+                // Sky: in progress. This is the one count on the dashboard
+                // describing work actually under way, so its mark turns
+                // rather than sitting still.
+                'tone' => 'sky',
+                'icon' => 'spinner',
+                'icon_spin' => true,
             ];
 
             $cards[] = [

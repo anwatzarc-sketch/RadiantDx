@@ -322,6 +322,45 @@
 }
 
 /*
+ * --- "In process" turns ---
+ *
+ * The dashboard's in-process count is the one figure on the page describing
+ * work that is moving while nobody is watching it, so its mark turns.
+ *
+ * Slowly, and that is the point: at the one second a loading spinner uses,
+ * the card reads as still fetching its own number. At six seconds it reads as
+ * a process under way, which is what it is. The global prefers-reduced-motion
+ * rule in the base layer stops it for anyone who asks.
+ */
+@layer components {
+    .icon-spin-slow {
+        transform-origin: center;
+        animation: icon-spin-slow 6s linear infinite;
+    }
+}
+
+@keyframes icon-spin-slow {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/*
+ * --- The navigation drawer holds the page still ---
+ *
+ * With the drawer open the page behind it must not scroll, or a finger that
+ * misses the panel scrolls the content underneath and the drawer appears to
+ * drift. The lock is scoped to the breakpoint at which the drawer exists, so
+ * resizing to a desktop width releases it on its own rather than needing the
+ * script to notice.
+ */
+@media (max-width: 63.999rem) {
+    body.drawer-open {
+        overflow: hidden;
+    }
+}
+
+/*
  * Touch devices only, keyed on the pointer rather than the viewport: a tablet
  * at desktop width still needs finger-sized controls, and a small laptop
  * window does not.

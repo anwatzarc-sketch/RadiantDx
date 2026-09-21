@@ -6,6 +6,7 @@
     'href' => null,
     'tone' => 'slate',
     'icon' => 'inbox',
+    'iconSpin' => false,
 ])
 
 @php
@@ -58,7 +59,12 @@
         @endif
     </span>
 
+    {{--
+        A card may turn its mark to say that what it counts is in motion —
+        specimens being worked on right now, rather than a queue sitting still.
+        It is opt-in per card: a dashboard where everything spins says nothing.
+    --}}
     <span class="flex size-11 shrink-0 items-center justify-center rounded-xl {{ $palette['tile'] }} transition duration-200 group-hover:scale-105">
-        <x-icon :name="$icon" class="size-5" />
+        <x-icon :name="$icon" @class(['size-5', 'icon-spin-slow' => $iconSpin]) />
     </span>
 </{{ $tag }}>

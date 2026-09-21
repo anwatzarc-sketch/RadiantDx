@@ -37,6 +37,47 @@ return [
         'logo' => env('LAB_LOGO_PATH', 'images/logo-mark.svg'),
     ],
 
+    /*
+     * The application footer, shown on every page of the administration shell.
+     *
+     * Everything here is configuration for the same reason the letterhead is:
+     * another site deploying this application has its own support desk, its own
+     * accreditations and its own policy pages, and none of that belongs in a
+     * template.
+     *
+     * Every value is optional. An empty one is omitted from the footer rather
+     * than rendered blank, so a deployment with no support line simply does not
+     * show one — and a policy link is never printed pointing at a page that
+     * does not exist.
+     */
+    'footer' => [
+        'tagline' => env('LAB_FOOTER_TAGLINE', 'Integrated diagnostic and laboratory management platform providing high-precision testing workflows, automated validation, and secure patient data analytics.'),
+
+        'support_hotline' => env('LAB_SUPPORT_HOTLINE', ''),
+        'support_email' => env('LAB_SUPPORT_EMAIL', ''),
+
+        /*
+         * An accreditation is a claim the laboratory is making about itself, so
+         * it is asserted by the deployment rather than assumed by the software.
+         * Comma separated: "ISO 15189 Accredited, HIPAA Compliant".
+         */
+        'accreditations' => env('LAB_ACCREDITATIONS', ''),
+
+        /*
+         * Policy pages are almost always hosted by the institution rather than
+         * served from here, so each is a full URL.
+         */
+        'privacy_url' => env('LAB_PRIVACY_URL', ''),
+        'terms_url' => env('LAB_TERMS_URL', ''),
+        'data_protection_url' => env('LAB_DATA_PROTECTION_URL', ''),
+    ],
+
+    /*
+     * Shown in the footer so a support call can open with which build the
+     * caller is actually looking at, rather than with a guess.
+     */
+    'version' => env('LAB_VERSION', '2.4.0'),
+
     'report' => [
         'footer' => env('LAB_REPORT_FOOTER', 'Results relate only to the specimen received.'),
     ],

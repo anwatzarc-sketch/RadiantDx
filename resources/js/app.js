@@ -209,6 +209,154 @@ Alpine.data('confirmDialog', () => ({
 }));
 
 /**
+ * Password reveal toggle.
+ *
+ * Backs the button <x-form.input type="password"> renders for itself, so every
+ * password and confirmation control in the application gains the same eye
+ * without its call site asking for one.
+ *
+ * It also answers `password-reveal`, which the generator below dispatches at
+ * the fields it fills: a password nobody typed has to be readable, or the
+ * administrator cannot pass it on to the person it belongs to.
+ */
+Alpine.data('passwordField', () => ({
+    revealed: false,
+}));
+
+/*
+ * Character sets for generated passwords.
+ *
+ * The policy the server enforces is Password::min(10)->letters()->mixedCase()
+ * ->numbers()->symbols() — see UserRequest, StaffAccountRequest and
+ * UpdatePasswordRequest, which must stay in step with this.
+ *
+ * Characters that are read back wrongly are left out: no l/I/1, no O/0/o. A
+ * temporary password is dictated down a corridor or over a telephone at least
+ * as often as it is pasted, and a rejected sign-in costs more than the few
+ * bits of entropy dropping them gives up.
+ */
+const PASSWORD_ALPHABETS = {
+    lower: 'abcdefghijkmnpqrstuvwxyz',
+    upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ',
+    digits: '23456789',
+    symbols: '!@#$%^&*?-_=+',
+};
+
+/**
+ * Uniform random integer below `bound`, from the platform's CSPRNG.
+ *
+ * Rejection sampling rather than a plain modulo: 2^32 is not a multiple of the
+ * alphabet sizes above, so `value % bound` would quietly favour the first few
+ * characters of every set. Math.random() is not used at all here — it is not a
+ * cryptographic source, and this value becomes someone's credential.
+ */
+function randomIndex(bound) {
+    const limit = Math.floor(0x100000000 / bound) * bound;
+    const buffer = new Uint32Array(1);
+
+    let value;
+
+    do {
+        crypto.getRandomValues(buffer);
+        value = buffer[0];
+    } while (value >= limit);
+
+    return value % bound;
+}
+
+function pickCharacter(alphabet) {
+    return alphabet.charAt(randomIndex(alphabet.length));
+}
+
+function generatePassword(length) {
+    const sets = Object.values(PASSWORD_ALPHABETS);
+
+    // One character from each set first, so the result satisfies the server's
+    // rule by construction rather than by luck — a generator that can emit a
+    // password the form then rejects is worse than no generator.
+    const characters = sets.map(pickCharacter);
+    const pool = sets.join('');
+
+    while (characters.length < length) {
+        characters.push(pickCharacter(pool));
+    }
+
+    // Fisher-Yates. Without it the first four positions would always run
+    // lower, upper, digit, symbol, which is a pattern worth not publishing.
+    for (let index = characters.length - 1; index > 0; index--) {
+        const swap = randomIndex(index + 1);
+        [characters[index], characters[swap]] = [characters[swap], characters[index]];
+    }
+
+    return characters.join('');
+}
+
+/**
+ * Strong password generator for account creation.
+ *
+ * Backs <x-form.password-generator>. It fills the password and confirmation
+ * fields of its own form together — an administrator issuing a credential for
+ * someone else should never have to type the same string twice — reveals them,
+ * and offers the result for copying.
+ *
+ * Fields are found by name within the enclosing form rather than by wrapping
+ * them, so the two-column layouts these forms use are left alone.
+ */
+Alpine.data('passwordGenerator', (config = {}) => ({
+    fields: config.fields ?? ['password', 'password_confirmation'],
+    length: config.length ?? 16,
+
+    generated: '',
+    copied: false,
+    copyFailed: false,
+
+    generate() {
+        const form = this.$el.closest('form');
+
+        if (!form) {
+            return;
+        }
+
+        const password = generatePassword(this.length);
+
+        this.fields.forEach((name) => {
+            const input = form.querySelector(`input[name="${name}"]`);
+
+            if (!input) {
+                return;
+            }
+
+            input.value = password;
+
+            // Anything bound to the field has to see this as a real edit rather
+            // than a value that appeared behind its back.
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new CustomEvent('password-reveal', { bubbles: true }));
+        });
+
+        this.generated = password;
+        this.copied = false;
+        this.copyFailed = false;
+    },
+
+    async copy() {
+        this.copied = false;
+        this.copyFailed = false;
+
+        try {
+            await navigator.clipboard.writeText(this.generated);
+            this.copied = true;
+            setTimeout(() => { this.copied = false; }, 3000);
+        } catch {
+            // The clipboard needs a secure context and the user's permission.
+            // The password is on screen and selectable either way, so a refusal
+            // here is worth saying plainly rather than failing silently.
+            this.copyFailed = true;
+        }
+    },
+}));
+
+/**
  * Profile photograph chooser with a visible crop region.
  *
  * Shows the picked file immediately and lets the person choose which part of it

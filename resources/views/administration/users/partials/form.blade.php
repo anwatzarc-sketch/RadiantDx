@@ -35,6 +35,8 @@
     </x-form.field>
 </div>
 
+<x-form.password-generator />
+
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
     <x-form.field name="role_id" label="Role" hint="Determines everything this account may see and do.">
         @if ($canChangeRole)

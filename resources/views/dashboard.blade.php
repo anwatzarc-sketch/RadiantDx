@@ -34,6 +34,7 @@
                     :href="$card['href'] ?? null"
                     :tone="$card['tone'] ?? 'slate'"
                     :icon="$card['icon'] ?? 'inbox'"
+                    :icon-spin="$card['icon_spin'] ?? false"
                 />
             @endforeach
         </div>

@@ -30,7 +30,11 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans text-slate-900 antialiased">
-<div x-data="{ sidebar: false }" class="app-shell flex min-h-full flex-col">
+<div
+    x-data="{ sidebar: false }"
+    x-effect="document.body.classList.toggle('drawer-open', sidebar)"
+    class="app-shell flex min-h-full flex-col"
+>
 
     {{-- Top bar --}}
     <header class="app-topbar sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -210,9 +214,7 @@
                 </div>
             </main>
 
-            <footer class="app-bottom-safe border-t border-slate-200 px-4 py-4 text-xs text-slate-400 sm:px-6 lg:px-8">
-                {{ config('laboratory.organisation.name', config('app.name')) }} — {{ config('app.name') }}
-            </footer>
+            <x-app-footer />
         </div>
     </div>
 </div>

@@ -37,7 +37,7 @@
     </div>
 </div>
 
-<main class="report-sheet mx-auto my-6 max-w-[210mm] bg-white p-[14mm] text-slate-900 shadow-lg print:my-0 print:shadow-none">
+<main class="report-sheet mx-auto my-4 max-w-[210mm] bg-white p-5 text-slate-900 shadow-lg sm:my-6 sm:p-8 md:p-[14mm] print:my-0 print:p-[14mm] print:shadow-none">
 
     {{-- Letterhead --}}
     <header class="avoid-break border-b-2 border-slate-900 pb-3">
@@ -157,37 +157,44 @@
                 </p>
             </div>
 
-            <table class="mt-2 w-full border-collapse text-sm">
-                <thead>
-                    <tr class="border-b border-slate-300">
-                        <th scope="col" class="py-1 pr-2 text-left text-xs font-bold tracking-wide text-slate-600 uppercase">Parameter</th>
-                        <th scope="col" class="py-1 pr-2 text-right text-xs font-bold tracking-wide text-slate-600 uppercase">Result</th>
-                        <th scope="col" class="py-1 pr-2 text-left text-xs font-bold tracking-wide text-slate-600 uppercase">Unit</th>
-                        <th scope="col" class="py-1 pr-2 text-left text-xs font-bold tracking-wide text-slate-600 uppercase">Reference</th>
-                        <th scope="col" class="py-1 text-center text-xs font-bold tracking-wide text-slate-600 uppercase">Flag</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($result->parameters as $parameter)
-                        <tr class="border-b border-slate-100">
-                            <td class="py-1 pr-2">
-                                {{ $parameter->parameter_name }}
-                                @if ($parameter->comment)
-                                    <span class="block text-xs text-slate-500">{{ $parameter->comment }}</span>
-                                @endif
-                            </td>
-                            <td class="py-1 pr-2 text-right font-mono {{ $parameter->isOutsideReference() ? 'font-bold' : '' }}">
-                                {{ $parameter->displayValue() ?: 'Not reported' }}
-                            </td>
-                            <td class="py-1 pr-2 text-slate-600">{{ $parameter->unit ?: '' }}</td>
-                            <td class="py-1 pr-2 text-slate-600">{{ $parameter->referenceSummary() ?: '' }}</td>
-                            <td class="py-1 text-center font-bold {{ $parameter->interpretation?->isCritical() ? 'text-rose-700' : ($parameter->isOutsideReference() ? 'text-amber-700' : 'text-slate-500') }}">
-                                {{ $parameter->interpretation?->reportFlag() ?? '' }}
-                            </td>
+            {{-- A result only means anything read beside its unit, reference
+                 range and flag, so this table is never stacked into cards the
+                 way .data-table is on a phone. It scrolls sideways as a unit
+                 instead, keeping every row intact. Print is untouched: on
+                 paper the sheet is full width and the table fits. --}}
+            <div class="overflow-x-auto print:overflow-visible">
+                <table class="mt-2 w-full min-w-[30rem] border-collapse text-sm print:min-w-0">
+                    <thead>
+                        <tr class="border-b border-slate-300">
+                            <th scope="col" class="py-1 pr-2 text-left text-xs font-bold tracking-wide text-slate-600 uppercase">Parameter</th>
+                            <th scope="col" class="py-1 pr-2 text-right text-xs font-bold tracking-wide text-slate-600 uppercase">Result</th>
+                            <th scope="col" class="py-1 pr-2 text-left text-xs font-bold tracking-wide text-slate-600 uppercase">Unit</th>
+                            <th scope="col" class="py-1 pr-2 text-left text-xs font-bold tracking-wide text-slate-600 uppercase">Reference</th>
+                            <th scope="col" class="py-1 text-center text-xs font-bold tracking-wide text-slate-600 uppercase">Flag</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach ($result->parameters as $parameter)
+                            <tr class="border-b border-slate-100">
+                                <td class="py-1 pr-2">
+                                    {{ $parameter->parameter_name }}
+                                    @if ($parameter->comment)
+                                        <span class="block text-xs text-slate-500">{{ $parameter->comment }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-1 pr-2 text-right font-mono {{ $parameter->isOutsideReference() ? 'font-bold' : '' }}">
+                                    {{ $parameter->displayValue() ?: 'Not reported' }}
+                                </td>
+                                <td class="py-1 pr-2 text-slate-600">{{ $parameter->unit ?: '' }}</td>
+                                <td class="py-1 pr-2 text-slate-600">{{ $parameter->referenceSummary() ?: '' }}</td>
+                                <td class="py-1 text-center font-bold {{ $parameter->interpretation?->isCritical() ? 'text-rose-700' : ($parameter->isOutsideReference() ? 'text-amber-700' : 'text-slate-500') }}">
+                                    {{ $parameter->interpretation?->reportFlag() ?? '' }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
             @if ($result->interpretation)
                 <div class="avoid-break mt-2 text-sm">

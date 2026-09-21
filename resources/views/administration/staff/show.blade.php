@@ -146,6 +146,8 @@
                                     <x-form.input type="password" name="password_confirmation" required autocomplete="new-password" />
                                 </x-form.field>
 
+                                <x-form.password-generator />
+
                                 <x-form.checkbox name="is_active" label="Account active" :checked="true" />
 
                                 <x-button type="submit" variant="primary" icon="plus" class="w-full">

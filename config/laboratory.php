@@ -17,7 +17,7 @@ declare(strict_types=1);
 return [
 
     'organisation' => [
-        'name' => env('LAB_ORGANISATION_NAME', 'Harme Medical Center'),
+        'name' => env('LAB_ORGANISATION_NAME', 'RadiantDx'),
         'department' => env('LAB_DEPARTMENT_NAME', 'Department of Laboratory Medicine'),
         'address' => env('LAB_ADDRESS_LINE', 'Harer, Ethiopia'),
         'phone' => env('LAB_CONTACT_PHONE', '+251920292354'),
@@ -35,6 +35,17 @@ return [
          * wordmark inside the artwork is too small to read.
          */
         'logo' => env('LAB_LOGO_PATH', 'images/logo-mark.svg'),
+
+        /*
+         * The same mark reversed out, for the placements that sit on a dark
+         * background — today the application footer. A mark drawn for paper
+         * is usually dark, and dark on brand-950 is close to invisible, so
+         * the alternative is configured rather than faked with a filter.
+         *
+         * Leave it empty to use the main mark everywhere: a site whose
+         * artwork already reads on dark needs no second file.
+         */
+        'logo_inverse' => env('LAB_LOGO_INVERSE_PATH', 'images/logo-mark-inverse.svg'),
     ],
 
     /*
@@ -102,7 +113,7 @@ return [
      * --color-brand-900 the sidebar uses.
      */
     'pwa' => [
-        'short_name' => env('LAB_PWA_SHORT_NAME', 'Harme Lab'),
+        'short_name' => env('LAB_PWA_SHORT_NAME', 'RadiantDx'),
         'theme_color' => env('LAB_PWA_THEME_COLOR', '#00303c'),
         'background_color' => env('LAB_PWA_BACKGROUND_COLOR', '#f8fafc'),
     ],

@@ -1,5 +1,5 @@
 /*
- * Service worker for the Harme Laboratory System.
+ * Service worker for RadiantDx.
  *
  * ---------------------------------------------------------------------------
  * What this deliberately does NOT do
@@ -26,9 +26,19 @@
  */
 
 const VERSION = 'v2';
-const ASSET_CACHE = `harme-assets-${VERSION}`;
+const ASSET_CACHE = `radiantdx-assets-${VERSION}`;
 const OFFLINE_URL = '/offline';
-const OFFLINE_CACHE = `harme-offline-${VERSION}`;
+const OFFLINE_CACHE = `radiantdx-offline-${VERSION}`;
+
+/*
+ * Every cache prefix this worker is responsible for deleting.
+ *
+ * The pre-rename prefix is still listed on purpose. Activation only reaps keys
+ * it recognises, so dropping `harme-` here would strand the asset and offline
+ * caches already sitting in an installed client's browser profile with nothing
+ * left that would ever clear them.
+ */
+const OWNED_CACHE_PREFIXES = ['radiantdx-', 'harme-'];
 
 /** Same-origin paths whose responses are identical for every user. */
 const CACHEABLE_PATHS = [/^\/build\//, /^\/images\//, /^\/favicon\.ico$/];
@@ -79,7 +89,12 @@ self.addEventListener('activate', (event) => {
             .then((keys) =>
                 Promise.all(
                     keys
-                        .filter((key) => key.startsWith('harme-') && key !== ASSET_CACHE && key !== OFFLINE_CACHE)
+                        .filter(
+                            (key) =>
+                                OWNED_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix)) &&
+                                key !== ASSET_CACHE &&
+                                key !== OFFLINE_CACHE,
+                        )
                         .map((key) => caches.delete(key)),
                 ),
             )

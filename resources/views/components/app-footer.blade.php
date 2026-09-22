@@ -32,6 +32,12 @@
     $department = (string) config('laboratory.organisation.department', '');
     $tagline = trim((string) config('laboratory.footer.tagline', ''));
 
+    // This footer is the one placement that sits on a dark ground, so it
+    // asks for the reversed mark and falls back to the main one when the
+    // deployment has not configured a second file.
+    $markPath = trim((string) config('laboratory.organisation.logo_inverse', ''))
+        ?: config('laboratory.organisation.logo', '');
+
     $hotline = trim((string) config('laboratory.footer.support_hotline', ''));
     $supportEmail = trim((string) config('laboratory.footer.support_email', ''));
 
@@ -82,7 +88,7 @@
             {{-- Identity --}}
             <div class="sm:col-span-2 xl:col-span-1">
                 <div class="flex items-center gap-3">
-                    <x-org-logo size="nav">
+                    <x-org-logo size="nav" :path="$markPath">
                         <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-700 text-white">
                             <x-icon name="beaker" class="size-5" />
                         </span>
@@ -193,7 +199,8 @@
         <div class="mx-auto flex max-w-[90rem] flex-col gap-3 px-4 py-4 text-xs text-brand-200/60 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
             <p>
                 &copy; {{ now()->year }} <strong class="font-semibold text-brand-100">{{ $organisation }}</strong>.
-                All rights reserved. {{ config('app.name') }}
+                All rights reserved.
+                @if (config('app.name') !== $organisation) {{ config('app.name') }} @endif
                 <span class="whitespace-nowrap">v{{ config('laboratory.version', '1.0.0') }}</span>
             </p>
 

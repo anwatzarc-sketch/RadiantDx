@@ -87,17 +87,40 @@ git worktree add ../radiantdx-production production
 
 ### Each release
 
+Assets are built in the **main** checkout and copied across. The worktree has no
+`node_modules` — it is git-ignored, so it never gets checked out — and installing a
+second copy of it there just to run Vite would be several hundred megabytes for
+nothing. Composer has no such problem and runs in the worktree directly.
+
 ```bash
+# 1. build assets where node_modules already lives
+cd /path/to/HarmeLaboratorySystem
+git checkout main
+npm run build
+
+# 2. bring code forward, then carry the assets over
 cd ../radiantdx-production
 git merge main --no-edit        # resolve .gitignore/.gitattributes toward production, once
+cp -r ../HarmeLaboratorySystem/public/build/. public/build/
 
-npm run build
+# 3. production dependencies, in the worktree so the main checkout keeps its dev packages
 composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
+# 4. ship
 git add -A
 git commit -m "Release $(date +%Y-%m-%d)"
 git push origin production
 ```
+
+Before pushing, confirm the artifact actually works — a broken `vendor/` is much
+cheaper to catch here than on the server:
+
+```bash
+php artisan --version                     # proves the autoloader is intact
+php -r "echo count(json_decode(file_get_contents('public/build/manifest.json'),true));"
+```
+
+The manifest must contain `resources/css/app.css` and `resources/js/app.js`.
 
 Confirm the Plesk PHP version **before** running `composer install` — the `vendor/`
 you build is resolved against your local PHP, and shipping one built for the wrong

@@ -35,7 +35,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::redirect('/', '/admin/dashboard')->name('home');
+/*
+ * Public marketing site. Static pages, no data: nothing here reads a record,
+ * so they sit outside every auth group. A signed-in visitor sees the same page
+ * with the sign-in call to action swapped for a link back to the dashboard.
+ */
+Route::view('/', 'marketing.home')->name('home');
+Route::view('products/laboratory-management-system', 'marketing.products.laboratory')
+    ->name('marketing.products.laboratory');
 
 /*
  * Installable-app endpoints. Unauthenticated by necessity: the browser reads

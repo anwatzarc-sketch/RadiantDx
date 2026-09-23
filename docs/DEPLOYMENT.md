@@ -124,16 +124,56 @@ Do these in order. Steps 1–3 in particular are not interchangeable.
 
 ### 1. TLS first
 
-Issue a Let's Encrypt certificate for `pulsecore.med.et` (and `www`) in
-**Plesk → SSL/TLS Certificates**, then turn on **Permanent SEO-safe 301 redirect from
-HTTP to HTTPS**.
-
 This is genuinely step one: the git remote is `https://…/plesk-git/pulsecore.git`, so
-until the certificate matches the hostname, `git push` fails TLS verification and
+until a certificate matches the hostname, `git push` fails TLS verification and
 nothing can be deployed at all.
 
-> Do not work around this with `http.sslVerify=false`. That sends the git credentials
-> over a connection you have stopped authenticating.
+Where things stand: DNS is already correct — `pulsecore.med.et` and `www` are both A
+records to **213.55.96.150**, which is **lin2.ethiotelecom.et**, the node the Plesk
+subscription lives on. There is no CNAME, and an apex CNAME would not be legal DNS
+anyway. Nothing about DNS needs changing. Until a certificate is bound to the domain,
+the node answers HTTPS with its own default certificate (`lin2`, sometimes a sibling
+node), which is why the name does not match.
+
+Either a Plesk-issued Let's Encrypt certificate or an externally issued one works.
+
+**If using an external CA with HTTP file validation** (Sectigo/Comodo hand you a file
+named like `7F0093E59B8E863AC57CCABF422E29F3.txt` containing a hash, `comodoca.com`
+and a token), it must be reachable at exactly:
+
+```
+http://pulsecore.med.et/.well-known/pki-validation/<THE-FILE>.txt
+```
+
+Two ordering traps, both easy to trip:
+
+- **Validate before changing the Document Root.** While the root is still `httpdocs`,
+  the file goes in `httpdocs/.well-known/pki-validation/`. After the root moves to
+  `httpdocs/public` (step 2) the same file must live in
+  `httpdocs/public/.well-known/pki-validation/` or it 404s. Doing validation first
+  avoids the question entirely.
+- **Do not enable the HTTP→HTTPS redirect until validation has completed.** The CA
+  fetches that URL over plain HTTP. Redirecting it to an HTTPS endpoint that is still
+  serving a mismatched certificate is a good way to fail validation for reasons that
+  look like nothing.
+
+Once Laravel is deployed the path keeps working without special handling: its
+`.htaccess` only rewrites to the front controller when the target is not a real file
+(`RewriteCond %{REQUEST_FILENAME} !-f`), so a genuine `.txt` on disk is served as-is.
+
+**Only after the certificate is installed**, turn on **Permanent SEO-safe 301 redirect
+from HTTP to HTTPS**, and verify from outside:
+
+```bash
+echo | openssl s_client -connect pulsecore.med.et:443 -servername pulsecore.med.et \
+  2>/dev/null | openssl x509 -noout -subject -ext subjectAltName
+```
+
+The subject must name `pulsecore.med.et`. If it still reports a `linN.ethiotelecom.et`
+default, the certificate was installed but not bound to this domain's vhost.
+
+> Do not work around any of this with `http.sslVerify=false`. That sends the git
+> credentials over a connection you have stopped authenticating.
 
 ### 2. Panel configuration
 

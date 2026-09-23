@@ -1,2 +1,9 @@
+# Every meaningful page in this application is an authenticated, server rendered
+# response containing patient identifiers. There is nothing here to index, and a
+# crawler that follows a stale link should not be helping anyone find the sign-in
+# page of a clinical records system.
+#
+# This is not an access control. It is a request that well behaved crawlers stay
+# away; authorisation is enforced on every route regardless.
 User-agent: *
-Disallow:
+Disallow: /

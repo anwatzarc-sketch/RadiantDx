@@ -59,9 +59,58 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            /*
+             * The union rather than array_merge: these are integer keys, and
+             * array_merge would renumber them into meaningless options.
+             */
+            'options' => extension_loaded('pdo_mysql')
+                ? array_filter([
+                    Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                ]) + [
+                    /*
+                     * For this driver PDO::ATTR_TIMEOUT is the connect
+                     * timeout, and it is the only bound on how long a request
+                     * waits for a database that is not answering.
+                     *
+                     * Without one, a host that drops packets rather than
+                     * refusing them — a firewall rule, a machine that has
+                     * gone away — leaves the request in the TCP retry
+                     * sequence until PHP's max_execution_time kills it. That
+                     * arrives as a fatal error with no exception to catch, so
+                     * the unreachable-database page never gets its chance to
+                     * render and the person waiting sees a bare 500 instead.
+                     *
+                     * Two things are worth knowing when tuning this:
+                     *
+                     * Even a refused connection is not instant. Windows
+                     * retries the SYN before reporting WSAECONNREFUSED, which
+                     * costs about two seconds on loopback; this setting caps
+                     * that too.
+                     *
+                     * And whatever is set here, the wait is multiplied by
+                     * four. Laravel lists "connection refused" among the
+                     * failures it treats as a lost connection, so the
+                     * connector retries once and Connection::run reconnects
+                     * and retries the whole thing again. That is the right
+                     * behaviour for a queue worker whose connection died
+                     * mid-shift, so it is left alone — but it means five
+                     * seconds here is up to twenty seconds of waiting before
+                     * the outage page appears.
+                     *
+                     * Five is a deliberately safe default: a healthy
+                     * connection on this host takes about a millisecond, so
+                     * there is enormous headroom, and a database that is
+                     * merely slow to accept under load is not mistaken for
+                     * one that is down. Lower it if a faster failure matters
+                     * more than that margin.
+                     *
+                     * Floored at one second, because a zero would mean
+                     * "connect instantly or fail" and no real network can
+                     * honour that.
+                     */
+                    PDO::ATTR_TIMEOUT => max(1, (int) env('DB_CONNECT_TIMEOUT', 5)),
+                ]
+                : [],
         ],
 
         'mariadb' => [
@@ -79,9 +128,58 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            /*
+             * The union rather than array_merge: these are integer keys, and
+             * array_merge would renumber them into meaningless options.
+             */
+            'options' => extension_loaded('pdo_mysql')
+                ? array_filter([
+                    Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                ]) + [
+                    /*
+                     * For this driver PDO::ATTR_TIMEOUT is the connect
+                     * timeout, and it is the only bound on how long a request
+                     * waits for a database that is not answering.
+                     *
+                     * Without one, a host that drops packets rather than
+                     * refusing them — a firewall rule, a machine that has
+                     * gone away — leaves the request in the TCP retry
+                     * sequence until PHP's max_execution_time kills it. That
+                     * arrives as a fatal error with no exception to catch, so
+                     * the unreachable-database page never gets its chance to
+                     * render and the person waiting sees a bare 500 instead.
+                     *
+                     * Two things are worth knowing when tuning this:
+                     *
+                     * Even a refused connection is not instant. Windows
+                     * retries the SYN before reporting WSAECONNREFUSED, which
+                     * costs about two seconds on loopback; this setting caps
+                     * that too.
+                     *
+                     * And whatever is set here, the wait is multiplied by
+                     * four. Laravel lists "connection refused" among the
+                     * failures it treats as a lost connection, so the
+                     * connector retries once and Connection::run reconnects
+                     * and retries the whole thing again. That is the right
+                     * behaviour for a queue worker whose connection died
+                     * mid-shift, so it is left alone — but it means five
+                     * seconds here is up to twenty seconds of waiting before
+                     * the outage page appears.
+                     *
+                     * Five is a deliberately safe default: a healthy
+                     * connection on this host takes about a millisecond, so
+                     * there is enormous headroom, and a database that is
+                     * merely slow to accept under load is not mistaken for
+                     * one that is down. Lower it if a faster failure matters
+                     * more than that margin.
+                     *
+                     * Floored at one second, because a zero would mean
+                     * "connect instantly or fail" and no real network can
+                     * honour that.
+                     */
+                    PDO::ATTR_TIMEOUT => max(1, (int) env('DB_CONNECT_TIMEOUT', 5)),
+                ]
+                : [],
         ],
 
         'pgsql' => [

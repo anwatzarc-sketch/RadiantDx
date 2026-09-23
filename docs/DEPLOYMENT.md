@@ -170,6 +170,29 @@ apex CNAME would not be legal DNS anyway.
 > If they disagree, point the machine at `1.1.1.1` or `8.8.8.8`. Flushing the Windows
 > cache does nothing, because the stale answer is upstream.
 
+The installed certificate is **Let's Encrypt**, issued 23 Sep 2026 and valid to
+**22 Dec 2026**. Plesk renews it automatically at around day 60 — late November — over
+HTTP-01, by writing a token into `.well-known/acme-challenge/` under the document root
+and fetching it over plain HTTP.
+
+**Verify renewal still works right after moving the document root**, rather than
+finding out in December. Moving it to `radiant/public` means Plesk writes challenges
+there instead, which is fine, and two things already protect the path: Laravel's
+`.htaccess` rewrites to the front controller only when the target is not a real file
+(`RewriteCond %{REQUEST_FILENAME} !-f`), and Plesk drops its own `.htaccess` in that
+directory setting `RewriteEngine off`. Confirm it anyway:
+
+```bash
+# from the panel's File Manager, drop a file at
+#   radiant/public/.well-known/acme-challenge/renewal-probe
+# then, from anywhere:
+curl -s http://pulsecore.med.et/.well-known/acme-challenge/renewal-probe
+```
+
+It must return the file's contents over **plain HTTP** — not a redirect to HTTPS, not
+the Laravel 404 page. Delete the probe afterwards. If it fails, renewal will fail in
+November and the site will start serving an expired certificate with no warning.
+
 Either a Plesk-issued Let's Encrypt certificate or an externally issued one works.
 
 **If using an external CA with HTTP file validation** (Sectigo/Comodo hand you a file

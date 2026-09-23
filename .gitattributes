@@ -9,3 +9,8 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Vendored code and build output ship byte-for-byte on this branch. The
+# repo-wide "* text=auto eol=lf" above must not rewrite them.
+vendor/**        -text
+public/build/**  -text

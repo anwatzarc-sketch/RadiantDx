@@ -258,7 +258,26 @@ maintenance mode up until the seed completes.
 
 ## Running artisan without SSH
 
-In order of preference:
+**Use the Laravel Toolkit extension.** Plesk ships one, and it runs artisan commands
+from the panel UI — which is the whole problem solved properly rather than worked
+around.
+
+It discovers an application only when `public/` is the document root and `artisan`
+sits in the parent directory, which is precisely the layout above. So after the first
+deploy, press **Scan** and it will find the app at `httpdocs`. Then run, in order:
+
+```
+migrate --force
+db:seed --force
+optimize --except=config
+```
+
+Do not use **Install Application** to set the site up from git. That is a parallel
+deployment mechanism with its own clone and its own checkout, and this project is
+already wired to Plesk's Git integration with a `production` branch built for it.
+Mixing the two gives you two things writing to the same directory.
+
+Fallbacks, if the extension is unavailable on this subscription:
 
 1. **Plesk → Scheduled Tasks → "Run a PHP script."** Script `httpdocs/artisan`,
    arguments e.g. `migrate --force`. Give it a schedule that will not fire on its own,
@@ -267,6 +286,18 @@ In order of preference:
 3. *Last resort:* a temporary token-guarded route calling `Artisan::call()`, removed
    in the very next push. Note that this puts a privileged operation on a public URL;
    it is a stopgap, not a pattern.
+
+### If the Toolkit can also run Composer
+
+It generally can, and that would make shipping `vendor/` in the branch unnecessary —
+6,445 tracked files and 67 MB of it. Worth testing **after** the first deploy
+succeeds, not during it: the current branch is built and verified, and swapping the
+dependency strategy mid-deployment trades a known-good state for an unknown one.
+
+If it works, drop `vendor/` from the production branch's `.gitignore` override and run
+`composer install --no-dev --optimize-autoloader` from the Toolkit after each deploy.
+Keep `public/build/` tracked regardless — the Toolkit does not build front-end assets,
+there is no Node on the host, and at 328 KB it costs nothing.
 
 ## The config-cache trap
 

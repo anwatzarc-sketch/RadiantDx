@@ -40,7 +40,7 @@ every one of them is wasted effort here:
 |---|---|
 | A cron entry for `schedule:run` | Nothing is scheduled. `routes/console.php` holds only the stock `inspire`. |
 | A queue worker | Nothing is ever queued. `app/Jobs` does not exist. The `database` queue tables are created and stay empty. |
-| SMTP credentials | Nothing sends mail. `app/Mail` and `app/Notifications` do not exist. |
+| A queue worker for mail | Nothing sends mail *yet* — no Mailables, no notifications, no password reset. SMTP is configured as groundwork and proved with `mail:test`; see [Mail](#mail). |
 | `php artisan storage:link` | Uploads go to the **private** disk and are streamed by an authorised controller. A public symlink would make every staff photograph reachable by guessing a URL. |
 | Redis | Sessions, cache and queue all use MySQL. |
 
@@ -310,6 +310,47 @@ If it works, drop `vendor/` from the production branch's `.gitignore` override a
 `composer install --no-dev --optimize-autoloader` from the Toolkit after each deploy.
 Keep `public/build/` tracked regardless — the Toolkit does not build front-end assets,
 there is no Node on the host, and at 328 KB it costs nothing.
+
+## Mail
+
+Enterprise mail is provisioned (`admin@pulsecore.med.et`, host `213.55.96.132`), but
+the provider named neither a port nor an encryption mode and the server does not
+answer from outside its own network. So the settings in `.env` are an assumption —
+587 with STARTTLS — until something proves them from the server.
+
+That is what `mail:test` is for. Run it from the Laravel Toolkit:
+
+```
+mail:test admin@pulsecore.med.et
+```
+
+It prints the settings it is about to use, sends one message, and on failure reports
+what the transport actually objected to along with the next thing to try. Finding the
+right combination usually takes two or three attempts, and the flags avoid an
+edit-and-redeploy for each one:
+
+```
+mail:test admin@pulsecore.med.et --port=465 --scheme=smtps
+mail:test admin@pulsecore.med.et --port=25  --scheme=
+```
+
+Once a combination works, write those values into `.env` by hand — the command never
+does, deliberately.
+
+Two things it will tell you that are easy to misread:
+
+- It always tests the **smtp** mailer, even while `MAIL_MAILER=log`, and warns when
+  those differ. Sending through the default mailer would mean that with `log` set it
+  writes a line to a file and declares success, having proved nothing.
+- Acceptance is not delivery. A server that accepts the message can still drop it.
+
+Note `MAIL_FROM_ADDRESS` is the authenticated mailbox rather than a `no-reply@`
+address. Most providers reject a sender that is not the mailbox that authenticated,
+and `no-reply@pulsecore.med.et` is not a real mailbox here.
+
+**Nothing in the application sends mail yet** — there are no Mailables, no
+notifications and no password-reset flow. This configuration is groundwork, so that
+whenever something does need to send, the transport is already known to work.
 
 ## The config-cache trap
 

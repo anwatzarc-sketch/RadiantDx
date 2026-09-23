@@ -16,7 +16,7 @@ mechanical.
 
 ```
 subscription root
-└── httpdocs/                  <- Plesk Git deploys the whole repo here
+└── radiant/                  <- Plesk Git deploys the whole repo here
     ├── app/  bootstrap/  config/  database/  routes/  storage/  vendor/
     ├── .env                   <- lives only on the server, never in git
     ├── artisan
@@ -25,10 +25,10 @@ subscription root
         └── build/             <- Vite output, shipped prebuilt
 ```
 
-The domain's Document Root is **`httpdocs/public`**, not `httpdocs`. That single
+The domain's Document Root is **`radiant/public`**, not `radiant`. That single
 setting is what keeps `.env`, `storage/` and the application code out of the web root
 while letting `public/index.php` stay stock Laravel — it resolves
-`__DIR__.'/../vendor/autoload.php'` to `httpdocs/vendor/autoload.php` with no
+`__DIR__.'/../vendor/autoload.php'` to `radiant/vendor/autoload.php` with no
 modification.
 
 ## What this application does *not* need
@@ -145,18 +145,30 @@ leak. Two things to know:
 
 Do these in order. Steps 1–3 in particular are not interchangeable.
 
-### 1. TLS first
+### 1. TLS — done, but read the DNS note
 
-This is genuinely step one: the git remote is `https://…/plesk-git/pulsecore.git`, so
-until a certificate matches the hostname, `git push` fails TLS verification and
-nothing can be deployed at all.
+**Status: complete.** `pulsecore.med.et` serves a valid certificate naming both the
+apex and `www`. Kept here because it is step one for any future rebuild: the git
+remote is `https://…/plesk-git/pulsecore.git`, so until a certificate matches the
+hostname, `git push` fails TLS verification and nothing can be deployed at all.
 
-Where things stand: DNS is already correct — `pulsecore.med.et` and `www` are both A
-records to **213.55.96.150**, which is **lin2.ethiotelecom.et**, the node the Plesk
-subscription lives on. There is no CNAME, and an apex CNAME would not be legal DNS
-anyway. Nothing about DNS needs changing. Until a certificate is bound to the domain,
-the node answers HTTPS with its own default certificate (`lin2`, sometimes a sibling
-node), which is why the name does not match.
+DNS: `pulsecore.med.et` and `www` are both A records to **213.55.96.150** —
+`lin2.ethiotelecom.et`, the node the subscription lives on. There is no CNAME, and an
+apex CNAME would not be legal DNS anyway.
+
+> **The trap that cost an afternoon.** Ethio Telecom's own resolvers can serve a stale
+> answer for this domain long after it is correct everywhere else — pointing at
+> `213.55.96.153` (`lin5`), a node with no certificate for it. The site then looks
+> broken from inside the network while being perfectly healthy from outside, and
+> `git push` fails with *"no alternative certificate subject name matches"*.
+>
+> Diagnose by comparing resolvers, not by trusting the local one:
+> ```bash
+> nslookup pulsecore.med.et 1.1.1.1      # the truth
+> nslookup pulsecore.med.et              # what this machine believes
+> ```
+> If they disagree, point the machine at `1.1.1.1` or `8.8.8.8`. Flushing the Windows
+> cache does nothing, because the stale answer is upstream.
 
 Either a Plesk-issued Let's Encrypt certificate or an externally issued one works.
 
@@ -170,10 +182,10 @@ http://pulsecore.med.et/.well-known/pki-validation/<THE-FILE>.txt
 
 Two ordering traps, both easy to trip:
 
-- **Validate before changing the Document Root.** While the root is still `httpdocs`,
-  the file goes in `httpdocs/.well-known/pki-validation/`. After the root moves to
-  `httpdocs/public` (step 2) the same file must live in
-  `httpdocs/public/.well-known/pki-validation/` or it 404s. Doing validation first
+- **Validate before changing the Document Root.** While the root is still `radiant`,
+  the file goes in `radiant/.well-known/pki-validation/`. After the root moves to
+  `radiant/public` (step 2) the same file must live in
+  `radiant/public/.well-known/pki-validation/` or it 404s. Doing validation first
   avoids the question entirely.
 - **Do not enable the HTTP→HTTPS redirect until validation has completed.** The CA
   fetches that URL over plain HTTP. Redirecting it to an HTTPS endpoint that is still
@@ -201,9 +213,9 @@ default, the certificate was installed but not bound to this domain's vhost.
 ### 2. Panel configuration
 
 - **PHP handler** → 8.3+, extensions as above.
-- **Document Root** → `httpdocs/public` (Websites & Domains → Hosting Settings).
+- **Document Root** → `radiant/public` (Websites & Domains → Hosting Settings).
 - **Database** → create the database and user; note the host (usually `localhost`).
-- **Git** → deployment path `httpdocs`, branch `production`, mode **Manual** for the
+- **Git** → deployment path `radiant`, branch `production`, mode **Manual** for the
   first deploy.
 
 ### 3. Push and deploy
@@ -212,7 +224,7 @@ Push `production`, then hit Deploy in Plesk.
 
 ### 4. Create `.env` — before running anything
 
-Through File Manager, create `httpdocs/.env`. Generate the key locally with
+Through File Manager, create `radiant/.env`. Generate the key locally with
 `php artisan key:generate --show` and paste it in.
 
 `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` **must** be set before you seed —
@@ -264,7 +276,7 @@ around.
 
 It discovers an application only when `public/` is the document root and `artisan`
 sits in the parent directory, which is precisely the layout above. So after the first
-deploy, press **Scan** and it will find the app at `httpdocs`. Then run, in order:
+deploy, press **Scan** and it will find the app at `radiant`. Then run, in order:
 
 ```
 migrate --force
@@ -279,7 +291,7 @@ Mixing the two gives you two things writing to the same directory.
 
 Fallbacks, if the extension is unavailable on this subscription:
 
-1. **Plesk → Scheduled Tasks → "Run a PHP script."** Script `httpdocs/artisan`,
+1. **Plesk → Scheduled Tasks → "Run a PHP script."** Script `radiant/artisan`,
    arguments e.g. `migrate --force`. Give it a schedule that will not fire on its own,
    press **Run Now**, read the output, then delete the task. Repeat per command.
 2. **Plesk → Git → "Additional deployment actions,"** if the provider exposes it.

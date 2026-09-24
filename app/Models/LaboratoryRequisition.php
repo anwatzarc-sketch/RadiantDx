@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Models\Concerns\RecordsActorSnapshots;
-
 use App\Enums\Gender;
 use App\Enums\RequisitionPriority;
 use App\Enums\RequisitionStatus;
+use App\Enums\ResultStatus;
+use App\Enums\ValidationStatus;
+use App\Models\Concerns\RecordsActorSnapshots;
+use App\Observers\LaboratoryRequisitionObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -34,6 +37,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, LaboratoryRequisitionItem> $items
  * @property-read Collection<int, LaboratoryResult> $results
  */
+#[ObservedBy(LaboratoryRequisitionObserver::class)]
 class LaboratoryRequisition extends Model
 {
     use RecordsActorSnapshots, SoftDeletes;
@@ -203,9 +207,9 @@ class LaboratoryRequisition extends Model
     public function resultProgress(): array
     {
         $total = $this->items->count();
-        $entered = $this->results->where('status', \App\Enums\ResultStatus::Completed)->count();
+        $entered = $this->results->where('status', ResultStatus::Completed)->count();
         $validated = $this->results
-            ->where('validation_status', \App\Enums\ValidationStatus::Validated)
+            ->where('validation_status', ValidationStatus::Validated)
             ->count();
 
         return [

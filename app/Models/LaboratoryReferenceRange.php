@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * A reference range for one parameter, for one sex and one age interval.
@@ -41,7 +42,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property bool $is_placeholder
  * @property bool $is_active
  * @property int $display_order
- * @property \Illuminate\Support\Carbon|null $verified_at
+ * @property Carbon|null $verified_at
  * @property-read LaboratoryTestParameter $parameter
  */
 class LaboratoryReferenceRange extends Model
@@ -194,7 +195,7 @@ class LaboratoryReferenceRange extends Model
             $low !== null && $high !== null => "{$low}–{$high}",
             $low !== null => "> {$low}",
             $high !== null => "< {$high}",
-            default => 'no limits',
+            default => 'no fixed range',
         };
     }
 

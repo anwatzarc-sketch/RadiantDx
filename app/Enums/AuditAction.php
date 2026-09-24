@@ -36,6 +36,13 @@ enum AuditAction: string
     case ParameterActivated = 'laboratory_parameter.activated';
     case ParameterDeactivated = 'laboratory_parameter.deactivated';
 
+    case ReferenceRangeCreated = 'laboratory_reference_range.created';
+    case ReferenceRangeUpdated = 'laboratory_reference_range.updated';
+    case ReferenceRangeActivated = 'laboratory_reference_range.activated';
+    case ReferenceRangeDeactivated = 'laboratory_reference_range.deactivated';
+    case ReferenceRangeDeleted = 'laboratory_reference_range.deleted';
+    case ReferenceRangeVerified = 'laboratory_reference_range.verified';
+
     case PanelCreated = 'laboratory_panel.created';
     case PanelUpdated = 'laboratory_panel.updated';
     case PanelDeleted = 'laboratory_panel.deleted';
@@ -97,6 +104,12 @@ enum AuditAction: string
             self::PanelDeleted => 'Panel deleted',
             self::PanelActivated => 'Panel activated',
             self::PanelDeactivated => 'Panel deactivated',
+            self::ReferenceRangeCreated => 'Reference range created',
+            self::ReferenceRangeUpdated => 'Reference range updated',
+            self::ReferenceRangeActivated => 'Reference range activated',
+            self::ReferenceRangeDeactivated => 'Reference range deactivated',
+            self::ReferenceRangeDeleted => 'Reference range deleted',
+            self::ReferenceRangeVerified => 'Reference range verified',
             self::RequisitionCreated => 'Requisition created',
             self::RequisitionUpdated => 'Requisition updated',
             self::RequisitionSubmitted => 'Requisition submitted',
@@ -126,7 +139,7 @@ enum AuditAction: string
     public function toneClasses(): string
     {
         return match (true) {
-            in_array($this, [self::ResultValidated, self::RequisitionCompleted], true) => 'bg-emerald-500',
+            in_array($this, [self::ResultValidated, self::RequisitionCompleted, self::ReferenceRangeVerified], true) => 'bg-emerald-500',
             in_array($this, [
                 self::RequisitionCancelled,
                 self::ResultUnvalidated,
@@ -134,6 +147,7 @@ enum AuditAction: string
                 self::RoleDeleted,
                 self::RequisitionDeleted,
                 self::ResultDeleted,
+                self::ReferenceRangeDeleted,
             ], true) => 'bg-rose-500',
             in_array($this, [self::ResultPrinted, self::UserLoggedIn, self::UserLoggedOut], true) => 'bg-slate-400',
             default => 'bg-sky-500',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Laboratory;
 
+use App\Enums\AbnormalWhen;
 use App\Enums\Interpretation;
 use App\Enums\ParameterDataType;
 use App\Models\LaboratoryResultParameter;
@@ -73,10 +74,22 @@ class InterpretationEvaluator
             return null;
         }
 
-        $criticalLow = $this->bound($parameter->critical_low);
-        $criticalHigh = $this->bound($parameter->critical_high);
-        $low = $this->bound($parameter->reference_low);
-        $high = $this->bound($parameter->reference_high);
+        /*
+         * The range's rule decides which sides are checked, for the critical
+         * limits as much as the reference ones: an "above high only" range
+         * (total cholesterol) never raises L or LL. A null limit is simply not
+         * checked, so a range with only a high limit needs no special case.
+         */
+        $rule = $parameter->numericRule();
+
+        if ($rule === AbnormalWhen::Never) {
+            return null;
+        }
+
+        $criticalLow = $rule->checksLow() ? $this->bound($parameter->critical_low) : null;
+        $criticalHigh = $rule->checksHigh() ? $this->bound($parameter->critical_high) : null;
+        $low = $rule->checksLow() ? $this->bound($parameter->reference_low) : null;
+        $high = $rule->checksHigh() ? $this->bound($parameter->reference_high) : null;
 
         if ($criticalLow !== null && $value < $criticalLow) {
             return Interpretation::CriticalLow;

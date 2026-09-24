@@ -24,6 +24,7 @@ class Unit extends Model
         'department_id',
         'name',
         'code',
+        'hl7_location_type',
         'is_active',
     ];
 

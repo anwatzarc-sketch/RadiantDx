@@ -1,0 +1,112 @@
+{
+  "source": "RadiantLab_HL7_Master_Data_Seeds (1).xlsx",
+  "count": 7,
+  "rows": [
+    {
+      "code": "LFT",
+      "name": "Liver function tests",
+      "loinc_code": "24325-3",
+      "hl7_section_code": "CH",
+      "members": [
+        "ALB",
+        "TBIL",
+        "DBIL",
+        "ALP",
+        "ALT",
+        "AST",
+        "TP"
+      ],
+      "notes": "Matches LOINC Hepatic function panel members",
+      "display_order": 1
+    },
+    {
+      "code": "RFT",
+      "name": "Renal function tests",
+      "loinc_code": null,
+      "hl7_section_code": "CH",
+      "members": [
+        "CREA",
+        "BUN",
+        "NA",
+        "K",
+        "CL"
+      ],
+      "notes": "LOINC 24362-6 Renal function panel has more members – use local code unless you add them",
+      "display_order": 2
+    },
+    {
+      "code": "LIPID",
+      "name": "Lipid profile",
+      "loinc_code": "24331-1",
+      "hl7_section_code": "CH",
+      "members": [
+        "CHOL",
+        "TG",
+        "HDL",
+        "LDL"
+      ],
+      "notes": "Lipid 1996 panel (calculated LDL)",
+      "display_order": 3
+    },
+    {
+      "code": "LYTES",
+      "name": "Electrolytes",
+      "loinc_code": null,
+      "hl7_section_code": "CH",
+      "members": [
+        "NA",
+        "K",
+        "CL"
+      ],
+      "notes": "LOINC 24326-1 includes CO2 – add bicarbonate test to use LOINC code",
+      "display_order": 4
+    },
+    {
+      "code": "ANC",
+      "name": "Antenatal care profile",
+      "loinc_code": null,
+      "hl7_section_code": "LAB",
+      "members": [
+        "CBC",
+        "ABORH",
+        "HBSAG",
+        "RPR",
+        "HIV",
+        "UA"
+      ],
+      "notes": "Local panel – no LOINC",
+      "display_order": 5
+    },
+    {
+      "code": "DM",
+      "name": "Diabetes follow-up",
+      "loinc_code": null,
+      "hl7_section_code": "CH",
+      "members": [
+        "FBS",
+        "HBA1C",
+        "CREA",
+        "UA"
+      ],
+      "notes": "Local panel",
+      "display_order": 6
+    },
+    {
+      "code": "PREOP",
+      "name": "Pre-operative work-up",
+      "loinc_code": null,
+      "hl7_section_code": "LAB",
+      "members": [
+        "CBC",
+        "ABORH",
+        "RBS",
+        "CREA",
+        "HBSAG",
+        "HCV",
+        "HIV"
+      ],
+      "notes": "Local panel",
+      "display_order": 7
+    }
+  ]
+}

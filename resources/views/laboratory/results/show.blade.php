@@ -267,6 +267,15 @@
                                             <p class="text-xs text-slate-500">
                                                 {{ $parameter->referenceSummary() ?: 'No reference range configured' }}
                                             </p>
+                                            {{-- Said at entry as well as on the report: the person
+                                                 entering the value is the first who can notice that
+                                                 a child is being judged without a range. --}}
+                                            @if ($parameter->rangeFootnote())
+                                                <p class="mt-1 flex items-start gap-1 text-xs text-amber-800">
+                                                    <x-icon name="info" class="mt-px size-3.5 shrink-0" />
+                                                    <span>{{ $parameter->rangeFootnote() }}</span>
+                                                </p>
+                                            @endif
                                         </div>
 
                                         {{-- Interpretation --}}

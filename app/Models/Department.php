@@ -25,6 +25,7 @@ class Department extends Model
     protected $fillable = [
         'name',
         'code',
+        'hl7_service_code',
         'description',
         'is_active',
     ];

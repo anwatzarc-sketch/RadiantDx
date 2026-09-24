@@ -16,6 +16,7 @@ use App\Models\LaboratoryRequisition;
 use App\Models\LaboratoryRequisitionItem;
 use App\Models\LaboratoryResult;
 use App\Models\LaboratoryResultParameter;
+use App\Models\LaboratoryTest;
 use App\Models\LaboratoryTestParameter;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -34,6 +35,7 @@ class ResultService
         private readonly InterpretationEvaluator $evaluator,
         private readonly AuditLogger $audit,
         private readonly AuthenticatedStaffResolver $identity,
+        private readonly ReferenceRangeResolver $ranges,
     ) {}
 
     /**
@@ -67,7 +69,7 @@ class ResultService
         }
 
         return DB::transaction(function () use ($item, $actor): LaboratoryResult {
-            $test = $item->test()->with('activeParameters.options')->firstOrFail();
+            $test = $item->test()->with(['activeParameters.options', 'activeParameters.referenceRanges'])->firstOrFail();
 
             $result = new LaboratoryResult([
                 'laboratory_requisition_id' => $item->laboratory_requisition_id,
@@ -86,7 +88,7 @@ class ResultService
             $result->updated_by = $actor->getKey();
             $result->save();
 
-            $this->materialiseParameters($result, $test);
+            $this->materialiseParameters($result, $test, PatientContext::fromRequisition($item->requisition));
 
             $this->audit->record(
                 AuditAction::ResultCreated,
@@ -104,7 +106,7 @@ class ResultService
      * Records entered values.
      *
      * @param  array<int, array{value: string|null, interpretation: string|null, comment: string|null}>  $values
-     *                                                                                                          keyed by result parameter id
+     *                                                                                                            keyed by result parameter id
      * @param  array{interpretation?: string|null, comments?: string|null}  $attributes
      */
     public function recordValues(
@@ -116,6 +118,10 @@ class ResultService
         $this->assertEditable($result);
 
         return DB::transaction(function () use ($result, $values, $attributes, $actor): LaboratoryResult {
+            // The range is chosen again at entry, so a range the laboratory
+            // director verified after this result was opened is the one used.
+            $this->refreshReferenceRanges($result);
+
             foreach ($result->parameters as $parameter) {
                 if (! array_key_exists($parameter->getKey(), $values)) {
                     continue;
@@ -314,7 +320,7 @@ class ResultService
      * catalogue definition so the report stays faithful if the catalogue is
      * later changed.
      */
-    private function materialiseParameters(LaboratoryResult $result, \App\Models\LaboratoryTest $test): void
+    private function materialiseParameters(LaboratoryResult $result, LaboratoryTest $test, PatientContext $patient): void
     {
         if (! $test->isParameterised()) {
             $result->parameters()->create([
@@ -336,7 +342,7 @@ class ResultService
         $order = 0;
 
         foreach ($test->activeParameters as $parameter) {
-            $result->parameters()->create($this->snapshotOf($parameter, ++$order));
+            $result->parameters()->create($this->snapshotOf($parameter, ++$order, $patient));
         }
 
         if ($order === 0) {
@@ -347,9 +353,9 @@ class ResultService
     }
 
     /** @return array<string, mixed> */
-    private function snapshotOf(LaboratoryTestParameter $parameter, int $order): array
+    private function snapshotOf(LaboratoryTestParameter $parameter, int $order, PatientContext $patient): array
     {
-        return [
+        $snapshot = [
             'laboratory_test_parameter_id' => $parameter->getKey(),
             'parameter_name' => $parameter->name,
             'parameter_code' => $parameter->code,
@@ -364,6 +370,64 @@ class ResultService
             'abnormal_when' => $parameter->abnormal_when,
             'display_order' => $order,
         ];
+
+        // Numeric values are judged against the range chosen for this
+        // patient. Other shapes keep the parameter's own abnormal value.
+        if ($parameter->data_type === ParameterDataType::Numeric) {
+            $snapshot = [...$snapshot, ...$this->ranges->resolve($parameter, $patient)->snapshotColumns()];
+        }
+
+        return $snapshot;
+    }
+
+    /**
+     * Chooses the reference range again for every numeric row of a result
+     * that is not validated, and re-flags any value already entered.
+     *
+     * A validated result is never touched: its ranges are part of what was
+     * signed, and change only through unvalidate and re-validate.
+     *
+     * A flag the laboratory chose by hand is kept. Only a flag that was the
+     * system's own suggestion follows the new range.
+     *
+     * @return int number of rows whose range changed
+     */
+    public function refreshReferenceRanges(LaboratoryResult $result): int
+    {
+        if ($result->isValidated()) {
+            return 0;
+        }
+
+        $patient = PatientContext::fromRequisition($result->requisition);
+        $changed = 0;
+
+        $result->loadMissing('parameters.parameter.referenceRanges', 'parameters.parameter.options');
+
+        foreach ($result->parameters as $row) {
+            $catalogue = $row->parameter;
+
+            if ($catalogue === null || $row->data_type !== ParameterDataType::Numeric) {
+                continue;
+            }
+
+            $row->fill($this->ranges->resolve($catalogue, $patient)->snapshotColumns());
+
+            if (! $row->isDirty()) {
+                continue;
+            }
+
+            $previousSuggestion = $row->auto_interpretation;
+            $row->auto_interpretation = $this->evaluator->suggest($row);
+
+            if ($row->interpretation === $previousSuggestion) {
+                $row->interpretation = $row->auto_interpretation;
+            }
+
+            $row->save();
+            $changed++;
+        }
+
+        return $changed;
     }
 
     /**

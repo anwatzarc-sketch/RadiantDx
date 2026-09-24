@@ -36,8 +36,10 @@ class LaboratoryTestParameter extends Model
         'laboratory_test_id',
         'name',
         'code',
+        'loinc_code',
         'description',
         'data_type',
+        'hl7_value_type',
         'unit',
         'reference_range',
         'reference_low',
@@ -76,6 +78,12 @@ class LaboratoryTestParameter extends Model
         return $this->hasMany(LaboratoryTestParameterOption::class)
             ->orderBy('display_order')
             ->orderBy('label');
+    }
+
+    /** @return HasMany<LaboratoryReferenceRange, $this> */
+    public function referenceRanges(): HasMany
+    {
+        return $this->hasMany(LaboratoryReferenceRange::class)->ordered();
     }
 
     /** @return HasMany<LaboratoryResultParameter, $this> */

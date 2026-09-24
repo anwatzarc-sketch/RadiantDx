@@ -13,6 +13,12 @@
                      :icon="$parameter->is_active ? 'check-circle' : 'ban'">
                 {{ $parameter->is_active ? 'Active' : 'Inactive' }}
             </x-badge>
+            @php($awaitingRanges = $parameter->referenceRanges->where('is_placeholder', true)->count())
+            @if ($awaitingRanges > 0)
+                <x-badge classes="bg-amber-100 text-amber-900 ring-amber-600/30" icon="warning">
+                    {{ trans_choice('{1} 1 range awaiting verification|[2,*] :count ranges awaiting verification', $awaitingRanges, ['count' => $awaitingRanges]) }}
+                </x-badge>
+            @endif
         </x-slot:meta>
 
         <x-slot:actions>
@@ -62,7 +68,7 @@
                 <x-detail label="Display order" :value="(string) $parameter->display_order" />
 
                 @if ($parameter->data_type->isNumeric())
-                    <x-detail label="Reference range" :value="$parameter->referenceSummary() ?: null" />
+                    <x-detail label="Adult default range" :value="$parameter->referenceSummary() ?: null" />
                     <x-detail label="Critical low" :value="$parameter->critical_low" />
                     <x-detail label="Critical high" :value="$parameter->critical_high" />
                     <x-detail label="Decimal places" :value="(string) $parameter->decimal_precision" />
@@ -105,5 +111,11 @@
             @endif
         </x-card>
     </div>
+
+    @if ($parameter->data_type->isNumeric())
+        <div class="mt-6">
+            @include('laboratory.parameters.partials.reference-ranges', ['parameter' => $parameter])
+        </div>
+    @endif
 
 </x-layouts.admin>

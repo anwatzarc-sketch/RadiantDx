@@ -21,7 +21,9 @@ class LaboratoryTestParameterOption extends Model
         'laboratory_test_parameter_id',
         'value',
         'label',
+        'snomed_code',
         'is_abnormal',
+        'hl7_flag',
         'is_active',
         'display_order',
     ];

@@ -31,10 +31,13 @@ class LaboratoryTest extends Model
     protected $fillable = [
         'name',
         'code',
+        'loinc_code',
         'description',
         'category',
+        'hl7_section_code',
         'specimen_type',
         'result_type',
+        'hl7_nature_code',
         'unit',
         'reference_range',
         'reference_low',

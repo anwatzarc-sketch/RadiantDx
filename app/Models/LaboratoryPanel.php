@@ -27,6 +27,7 @@ class LaboratoryPanel extends Model
     protected $fillable = [
         'name',
         'code',
+        'loinc_code',
         'description',
         'category',
         'is_active',

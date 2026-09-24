@@ -23,6 +23,7 @@ class TestParameterController extends Controller
 
         $parameters = LaboratoryTestParameter::query()
             ->with('test')
+            ->withCount(['referenceRanges as placeholder_ranges_count' => fn ($query) => $query->where('is_placeholder', true)])
             ->search($request->string('search')->trim()->value())
             ->when($request->filled('test'), fn ($query) => $query->where('laboratory_test_id', $request->integer('test')))
             ->when($request->filled('data_type'), fn ($query) => $query->where('data_type', $request->string('data_type')))
@@ -69,7 +70,7 @@ class TestParameterController extends Controller
         $this->authorize('view', $parameter);
 
         return view('laboratory.parameters.show', [
-            'parameter' => $parameter->load(['test', 'options']),
+            'parameter' => $parameter->load(['test', 'options', 'referenceRanges']),
         ]);
     }
 
@@ -78,7 +79,7 @@ class TestParameterController extends Controller
         $this->authorize('update', $parameter);
 
         return view('laboratory.parameters.edit', [
-            'parameter' => $parameter->load('options'),
+            'parameter' => $parameter->load(['options', 'referenceRanges']),
             'tests' => LaboratoryTest::query()->ordered()->get(),
         ]);
     }

@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\AbnormalWhen;
 use App\Enums\Interpretation;
 use App\Enums\ParameterDataType;
+use App\Enums\PatientAgeBasis;
+use App\Enums\ReferenceRangeBasis;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -25,9 +28,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class LaboratoryResultParameter extends Model
 {
+    /**
+     * The range label written when a patient under 18 matched no stratified
+     * range. An adult default is deliberately not used for a child, so the
+     * row says why it carries no range, and the report footnotes it.
+     */
+    public const NO_AGE_APPROPRIATE_RANGE = 'No age-appropriate range';
+
     protected $fillable = [
         'laboratory_result_id',
         'laboratory_test_parameter_id',
+        'laboratory_reference_range_id',
         'parameter_name',
         'parameter_code',
         'data_type',
@@ -39,6 +50,8 @@ class LaboratoryResultParameter extends Model
         'critical_high',
         'decimal_precision',
         'abnormal_when',
+        'reference_range_basis',
+        'patient_age_basis',
         'result_value',
         'result_numeric',
         'auto_interpretation',
@@ -53,6 +66,8 @@ class LaboratoryResultParameter extends Model
             'data_type' => ParameterDataType::class,
             'auto_interpretation' => Interpretation::class,
             'interpretation' => Interpretation::class,
+            'reference_range_basis' => ReferenceRangeBasis::class,
+            'patient_age_basis' => PatientAgeBasis::class,
             'reference_low' => 'decimal:6',
             'reference_high' => 'decimal:6',
             'critical_low' => 'decimal:6',
@@ -73,6 +88,44 @@ class LaboratoryResultParameter extends Model
     public function parameter(): BelongsTo
     {
         return $this->belongsTo(LaboratoryTestParameter::class, 'laboratory_test_parameter_id');
+    }
+
+    /** @return BelongsTo<LaboratoryReferenceRange, $this> */
+    public function referenceRange(): BelongsTo
+    {
+        return $this->belongsTo(LaboratoryReferenceRange::class, 'laboratory_reference_range_id')->withTrashed();
+    }
+
+    /**
+     * The numeric flagging rule snapshotted from the selected range.
+     *
+     * Numeric rows only: on a yes/no or positive/negative row this column
+     * holds the abnormal value instead, and means something else entirely.
+     * Anything unrecognised reads as outside_range, the behaviour before
+     * ranges carried a rule.
+     */
+    public function numericRule(): AbnormalWhen
+    {
+        return AbnormalWhen::tryFrom((string) $this->abnormal_when) ?? AbnormalWhen::OutsideRange;
+    }
+
+    /**
+     * The footnote a printed report owes the reader for this row, or null.
+     *
+     * A range picked from the patient's recorded age in years, an adult
+     * default standing in for a missing stratified range, and no range at all
+     * are each worth saying out loud on a clinical document.
+     */
+    public function rangeFootnote(): ?string
+    {
+        return match (true) {
+            $this->reference_range_basis === ReferenceRangeBasis::None
+                && $this->reference_range === self::NO_AGE_APPROPRIATE_RANGE => 'No age-appropriate reference range established.',
+            $this->reference_range_basis === ReferenceRangeBasis::None => 'No reference range applies; not flagged automatically.',
+            $this->reference_range_basis === ReferenceRangeBasis::Default => 'Adult default range; no age- and sex-specific range matched.',
+            $this->patient_age_basis === PatientAgeBasis::AgeYears => 'Range selected from age in years; date of birth not recorded.',
+            default => null,
+        };
     }
 
     public function hasValue(): bool

@@ -1,0 +1,447 @@
+{
+  "source": "RadiantLab_HL7_Master_Data_Seeds (1).xlsx",
+  "count": 49,
+  "rows": [
+    {
+      "option_set": "POS_NEG",
+      "value": "positive",
+      "label": "Positive",
+      "is_abnormal": true,
+      "snomed_code": "10828004",
+      "hl7_flag": "POS",
+      "display_order": 1
+    },
+    {
+      "option_set": "POS_NEG",
+      "value": "negative",
+      "label": "Negative",
+      "is_abnormal": false,
+      "snomed_code": "260385009",
+      "hl7_flag": "NEG",
+      "display_order": 2
+    },
+    {
+      "option_set": "REACTIVE",
+      "value": "reactive",
+      "label": "Reactive",
+      "is_abnormal": true,
+      "snomed_code": "11214006",
+      "hl7_flag": "POS",
+      "display_order": 1
+    },
+    {
+      "option_set": "REACTIVE",
+      "value": "non_reactive",
+      "label": "Non-reactive",
+      "is_abnormal": false,
+      "snomed_code": "131194007",
+      "hl7_flag": "NEG",
+      "display_order": 2
+    },
+    {
+      "option_set": "DETECTED",
+      "value": "detected",
+      "label": "Detected",
+      "is_abnormal": true,
+      "snomed_code": "260373001",
+      "hl7_flag": "DET",
+      "display_order": 1
+    },
+    {
+      "option_set": "DETECTED",
+      "value": "not_detected",
+      "label": "Not detected",
+      "is_abnormal": false,
+      "snomed_code": "260415000",
+      "hl7_flag": "ND",
+      "display_order": 2
+    },
+    {
+      "option_set": "DIPSTICK",
+      "value": "neg",
+      "label": "Negative",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "NEG",
+      "display_order": 1
+    },
+    {
+      "option_set": "DIPSTICK",
+      "value": "trace",
+      "label": "Trace",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 2
+    },
+    {
+      "option_set": "DIPSTICK",
+      "value": "1+",
+      "label": "1+",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 3
+    },
+    {
+      "option_set": "DIPSTICK",
+      "value": "2+",
+      "label": "2+",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 4
+    },
+    {
+      "option_set": "DIPSTICK",
+      "value": "3+",
+      "label": "3+",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 5
+    },
+    {
+      "option_set": "DIPSTICK",
+      "value": "4+",
+      "label": "4+",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 6
+    },
+    {
+      "option_set": "URINE_COLOR",
+      "value": "pale_yellow",
+      "label": "Pale yellow",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 1
+    },
+    {
+      "option_set": "URINE_COLOR",
+      "value": "yellow",
+      "label": "Yellow",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 2
+    },
+    {
+      "option_set": "URINE_COLOR",
+      "value": "amber",
+      "label": "Amber",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 3
+    },
+    {
+      "option_set": "URINE_COLOR",
+      "value": "red",
+      "label": "Red",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 4
+    },
+    {
+      "option_set": "URINE_COLOR",
+      "value": "brown",
+      "label": "Brown",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 5
+    },
+    {
+      "option_set": "CLARITY",
+      "value": "clear",
+      "label": "Clear",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 1
+    },
+    {
+      "option_set": "CLARITY",
+      "value": "slightly_turbid",
+      "label": "Slightly turbid",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 2
+    },
+    {
+      "option_set": "CLARITY",
+      "value": "turbid",
+      "label": "Turbid",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 3
+    },
+    {
+      "option_set": "ABO_RH",
+      "value": "A_pos",
+      "label": "A Rh positive",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 1
+    },
+    {
+      "option_set": "ABO_RH",
+      "value": "A_neg",
+      "label": "A Rh negative",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 2
+    },
+    {
+      "option_set": "ABO_RH",
+      "value": "B_pos",
+      "label": "B Rh positive",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 3
+    },
+    {
+      "option_set": "ABO_RH",
+      "value": "B_neg",
+      "label": "B Rh negative",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 4
+    },
+    {
+      "option_set": "ABO_RH",
+      "value": "AB_pos",
+      "label": "AB Rh positive",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 5
+    },
+    {
+      "option_set": "ABO_RH",
+      "value": "AB_neg",
+      "label": "AB Rh negative",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 6
+    },
+    {
+      "option_set": "ABO_RH",
+      "value": "O_pos",
+      "label": "O Rh positive",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 7
+    },
+    {
+      "option_set": "ABO_RH",
+      "value": "O_neg",
+      "label": "O Rh negative",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 8
+    },
+    {
+      "option_set": "MALARIA",
+      "value": "none_seen",
+      "label": "No hemoparasite seen",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 1
+    },
+    {
+      "option_set": "MALARIA",
+      "value": "pf",
+      "label": "Plasmodium falciparum",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 2
+    },
+    {
+      "option_set": "MALARIA",
+      "value": "pv",
+      "label": "Plasmodium vivax",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 3
+    },
+    {
+      "option_set": "MALARIA",
+      "value": "mixed",
+      "label": "Mixed (P. falciparum + P. vivax)",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 4
+    },
+    {
+      "option_set": "MALARIA",
+      "value": "other",
+      "label": "Other Plasmodium spp.",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 5
+    },
+    {
+      "option_set": "STOOL_CONSISTENCY",
+      "value": "formed",
+      "label": "Formed",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 1
+    },
+    {
+      "option_set": "STOOL_CONSISTENCY",
+      "value": "soft",
+      "label": "Soft",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 2
+    },
+    {
+      "option_set": "STOOL_CONSISTENCY",
+      "value": "loose",
+      "label": "Loose",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 3
+    },
+    {
+      "option_set": "STOOL_CONSISTENCY",
+      "value": "watery",
+      "label": "Watery",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 4
+    },
+    {
+      "option_set": "STOOL_CONSISTENCY",
+      "value": "mucoid",
+      "label": "Mucoid",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 5
+    },
+    {
+      "option_set": "STOOL_CONSISTENCY",
+      "value": "bloody",
+      "label": "Bloody",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 6
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "none_seen",
+      "label": "No ova or parasite seen",
+      "is_abnormal": false,
+      "snomed_code": null,
+      "hl7_flag": "N",
+      "display_order": 1
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "giardia",
+      "label": "Giardia lamblia",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 2
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "e_histolytica",
+      "label": "E. histolytica/dispar",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 3
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "ascaris",
+      "label": "Ascaris lumbricoides",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 4
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "hookworm",
+      "label": "Hookworm",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 5
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "trichuris",
+      "label": "Trichuris trichiura",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 6
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "s_mansoni",
+      "label": "Schistosoma mansoni",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 7
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "taenia",
+      "label": "Taenia spp.",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 8
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "strongyloides",
+      "label": "Strongyloides stercoralis",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 9
+    },
+    {
+      "option_set": "STOOL_PARASITE",
+      "value": "h_nana",
+      "label": "Hymenolepis nana",
+      "is_abnormal": true,
+      "snomed_code": null,
+      "hl7_flag": "A",
+      "display_order": 10
+    }
+  ]
+}

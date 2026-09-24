@@ -162,6 +162,12 @@
                  way .data-table is on a phone. It scrolls sideways as a unit
                  instead, keeping every row intact. Print is untouched: on
                  paper the sheet is full width and the table fits. --}}
+            {{-- Each distinct caveat about how a reference range was chosen is
+                 numbered once per investigation and marked on its rows, so
+                 "adult default used" or "no range for this age" is never left
+                 for the reader to infer from a blank or a familiar number. --}}
+            @php($rangeNotes = $result->parameters->map->rangeFootnote()->filter()->unique()->values())
+
             <div class="overflow-x-auto print:overflow-visible">
                 <table class="mt-2 w-full min-w-[30rem] border-collapse text-sm print:min-w-0">
                     <thead>
@@ -186,7 +192,12 @@
                                     {{ $parameter->displayValue() ?: 'Not reported' }}
                                 </td>
                                 <td class="py-1 pr-2 text-slate-600">{{ $parameter->unit ?: '' }}</td>
-                                <td class="py-1 pr-2 text-slate-600">{{ $parameter->referenceSummary() ?: '' }}</td>
+                                <td class="py-1 pr-2 text-slate-600">
+                                    {{ $parameter->referenceSummary() ?: '' }}
+                                    @if ($parameter->rangeFootnote())
+                                        <sup class="font-semibold text-slate-700">{{ $rangeNotes->search($parameter->rangeFootnote()) + 1 }}</sup>
+                                    @endif
+                                </td>
                                 <td class="py-1 text-center font-bold {{ $parameter->interpretation?->isCritical() ? 'text-rose-700' : ($parameter->isOutsideReference() ? 'text-amber-700' : 'text-slate-500') }}">
                                     {{ $parameter->interpretation?->reportFlag() ?? '' }}
                                 </td>
@@ -195,6 +206,14 @@
                     </tbody>
                 </table>
             </div>
+
+            @if ($rangeNotes->isNotEmpty())
+                <ol class="avoid-break mt-1.5 space-y-0.5 text-xs text-slate-600">
+                    @foreach ($rangeNotes as $note)
+                        <li><sup class="font-semibold text-slate-700">{{ $loop->iteration }}</sup> {{ $note }}</li>
+                    @endforeach
+                </ol>
+            @endif
 
             @if ($result->interpretation)
                 <div class="avoid-break mt-2 text-sm">

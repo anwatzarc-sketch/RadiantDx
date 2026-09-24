@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\LaboratoryPanel;
+use App\Models\LaboratoryReferenceRange;
 use App\Models\LaboratoryRequisition;
 use App\Models\LaboratoryResult;
 use App\Models\LaboratoryTest;
@@ -13,6 +14,7 @@ use App\Models\Role;
 use App\Models\Staff;
 use App\Models\User;
 use App\Policies\LaboratoryPanelPolicy;
+use App\Policies\LaboratoryReferenceRangePolicy;
 use App\Policies\LaboratoryRequisitionPolicy;
 use App\Policies\LaboratoryResultPolicy;
 use App\Policies\LaboratoryTestParameterPolicy;
@@ -46,6 +48,7 @@ class AuthorizationServiceProvider extends ServiceProvider
         Role::class => RolePolicy::class,
         LaboratoryTest::class => LaboratoryTestPolicy::class,
         LaboratoryTestParameter::class => LaboratoryTestParameterPolicy::class,
+        LaboratoryReferenceRange::class => LaboratoryReferenceRangePolicy::class,
         LaboratoryPanel::class => LaboratoryPanelPolicy::class,
         LaboratoryRequisition::class => LaboratoryRequisitionPolicy::class,
         LaboratoryResult::class => LaboratoryResultPolicy::class,

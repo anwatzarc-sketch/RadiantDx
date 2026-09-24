@@ -54,10 +54,11 @@
 
     {{-- Numeric: reference and critical bounds --}}
     <div x-show="dataType === 'numeric'" x-cloak class="space-y-4 rounded-lg bg-slate-50 p-4">
-        <p class="text-sm font-medium text-slate-700">Reference range</p>
+        <p class="text-sm font-medium text-slate-700">Adult default range</p>
         <p class="text-xs text-slate-500">
-            Used to suggest an interpretation when a value is entered. The suggestion never replaces the value the
-            laboratory records.
+            Used when none of the parameter's age- and sex-specific reference ranges matches the patient, and only for
+            an adult or a patient whose age is unknown: a child with no matching range gets no range at all. The
+            suggested flag never replaces the value the laboratory records.
         </p>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">

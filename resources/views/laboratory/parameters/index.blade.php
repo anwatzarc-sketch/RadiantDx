@@ -94,6 +94,11 @@
                                              :icon="$parameter->is_active ? 'check-circle' : 'ban'">
                                         {{ $parameter->is_active ? 'Active' : 'Inactive' }}
                                     </x-badge>
+                                    @if ($parameter->placeholder_ranges_count > 0)
+                                        <x-badge classes="bg-amber-100 text-amber-900 ring-amber-600/30" class="mt-1">
+                                            {{ $parameter->placeholder_ranges_count }} placeholder {{ Str::plural('range', $parameter->placeholder_ranges_count) }}
+                                        </x-badge>
+                                    @endif
                                 </td>
                                 <td class="text-right">
                                     <div class="flex items-center justify-end gap-1.5">

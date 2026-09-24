@@ -15,6 +15,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnumController;
 use App\Http\Controllers\Laboratory\LaboratoryPanelController;
 use App\Http\Controllers\Laboratory\LaboratoryTestController;
+use App\Http\Controllers\Laboratory\ReferenceRangeController;
 use App\Http\Controllers\Laboratory\ReportController;
 use App\Http\Controllers\Laboratory\RequisitionController;
 use App\Http\Controllers\Laboratory\ResultController;
@@ -200,6 +201,24 @@ Route::middleware(['auth', 'active'])->group(function (): void {
                 Route::patch('{parameter}/activate', [TestParameterController::class, 'activate'])->middleware('permission:laboratory.parameter.activate')->name('activate');
                 Route::patch('{parameter}/deactivate', [TestParameterController::class, 'deactivate'])->middleware('permission:laboratory.parameter.deactivate')->name('deactivate');
                 Route::delete('{parameter}', [TestParameterController::class, 'destroy'])->middleware('permission:laboratory.parameter.delete')->name('destroy');
+
+                /*
+                 * Reference ranges, nested under their parameter. Scoped
+                 * bindings make a range reachable only through its own
+                 * parameter's URL. They are listed on the parameter page, so
+                 * there is no index route. Verifying is an update.
+                 */
+                Route::prefix('{parameter}/ranges')->name('ranges.')->scopeBindings()->group(function (): void {
+                    Route::get('create', [ReferenceRangeController::class, 'create'])->middleware('permission:laboratory.parameter.update')->name('create');
+                    Route::post('/', [ReferenceRangeController::class, 'store'])->middleware('permission:laboratory.parameter.update')->name('store');
+                    Route::post('verify', [ReferenceRangeController::class, 'verifyMany'])->middleware('permission:laboratory.parameter.update')->name('verify-many');
+                    Route::get('{referenceRange}/edit', [ReferenceRangeController::class, 'edit'])->middleware('permission:laboratory.parameter.update')->name('edit');
+                    Route::put('{referenceRange}', [ReferenceRangeController::class, 'update'])->middleware('permission:laboratory.parameter.update')->name('update');
+                    Route::post('{referenceRange}/verify', [ReferenceRangeController::class, 'verify'])->middleware('permission:laboratory.parameter.update')->name('verify');
+                    Route::patch('{referenceRange}/activate', [ReferenceRangeController::class, 'activate'])->middleware('permission:laboratory.parameter.activate')->name('activate');
+                    Route::patch('{referenceRange}/deactivate', [ReferenceRangeController::class, 'deactivate'])->middleware('permission:laboratory.parameter.deactivate')->name('deactivate');
+                    Route::delete('{referenceRange}', [ReferenceRangeController::class, 'destroy'])->middleware('permission:laboratory.parameter.delete')->name('destroy');
+                });
             });
 
             Route::prefix('panels')->name('panels.')->group(function (): void {

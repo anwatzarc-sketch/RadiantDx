@@ -35,4 +35,12 @@
         </div>
     </form>
 
+    {{-- Outside the parameter form: each range has its own forms, and forms
+         cannot nest. --}}
+    @if ($parameter->data_type->isNumeric())
+        <div class="mt-8">
+            @include('laboratory.parameters.partials.reference-ranges', ['parameter' => $parameter])
+        </div>
+    @endif
+
 </x-layouts.admin>

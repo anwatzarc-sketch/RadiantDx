@@ -125,11 +125,38 @@ class LaboratoryReferenceRangeSeeder extends Seeder
             'reference_high' => $row['reference_high'],
             'critical_low' => $row['critical_low'],
             'critical_high' => $row['critical_high'],
-            'reference_range_text' => $row['reference_range_text'],
+            'reference_range_text' => $this->printedText($row),
             'abnormal_when' => $row['abnormal_when'],
             'notes' => $row['notes'],
             'display_order' => $row['range_number'],
         ];
+    }
+
+    /**
+     * The workbook's OBX-7 text, kept only when it says something the limits
+     * do not.
+     *
+     * Printed text overrides the numbers on the report. Stored when it merely
+     * repeats them ("12–16"), it would go stale the moment the director
+     * corrected a limit and left the text alone, and the report would print
+     * the old range beside a flag computed from the new one.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function printedText(array $row): ?string
+    {
+        $text = $row['reference_range_text'];
+
+        if ($text === null) {
+            return null;
+        }
+
+        $derived = (new LaboratoryReferenceRange([
+            'reference_low' => $row['reference_low'],
+            'reference_high' => $row['reference_high'],
+        ]))->valuesLabel();
+
+        return $text === $derived ? null : $text;
     }
 
     /**

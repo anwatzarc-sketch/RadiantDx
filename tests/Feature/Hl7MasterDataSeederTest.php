@@ -106,6 +106,10 @@ class Hl7MasterDataSeederTest extends TestCase
 
         $this->seed(Hl7MasterDataSeeder::class);
 
+        // Printed text that only repeated the limits is not stored, so it
+        // cannot go stale when a limit is corrected.
+        $this->assertSame(0, LaboratoryReferenceRange::query()->whereNotNull('reference_range_text')->count());
+
         $this->assertSame('13.000000', $verified->refresh()->reference_low);
         $this->assertFalse($verified->is_placeholder);
         $this->assertFalse($deactivated->refresh()->is_active);
